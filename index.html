@@ -1,0 +1,2254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHSO Grant Directory</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* ── DESIGN SYSTEM — Government/Public Service─────────────
+   Colors: Government palette #0F172A + #0369A1 + #F8FAFC
+   Typography: Lexend (headings) + Source Sans 3 (body)
+   Style: Financial Dashboard + Data-Dense hybrid
+   Accessibility: WCAG AAA target
+────────────────────────────────────────────────────────────────────────── */
+:root {
+  --primary:        #0F172A;
+  --primary-fg:     #FFFFFF;
+  --secondary:      #334155;
+  --secondary-fg:   #FFFFFF;
+  --accent:         #0369A1;
+  --accent-fg:      #FFFFFF;
+  --accent-light:   #E0F2FE;
+  --accent-hover:   #0284C7;
+  --bg:             #F8FAFC;
+  --surface:        #FFFFFF;
+  --surface2:       #F1F5F9;
+  --surface3:       #E8ECF1;
+  --border:         #E2E8F0;
+  --border-strong:  #CBD5E1;
+  --text:           #020617;
+  --text-secondary: #475569;
+  --text-muted:     #64748B;
+  --text-faint:     #94A3B8;
+  --green:          #16A34A;
+  --green-bg:       #DCFCE7;
+  --green-border:   #86EFAC;
+  --amber:          #D97706;
+  --amber-bg:       #FEF3C7;
+  --amber-border:   #FCD34D;
+  --orange:         #EA580C;
+  --orange-bg:      #FFEDD5;
+  --red:            #DC2626;
+  --red-bg:         #FEE2E2;
+  --red-border:     #FCA5A5;
+  --destructive:    #DC2626;
+  --radius:         6px;
+  --radius-lg:      10px;
+  --shadow-sm:      0 1px 2px rgba(15,23,42,0.06);
+  --shadow:         0 1px 3px rgba(15,23,42,0.1), 0 1px 2px rgba(15,23,42,0.06);
+  --shadow-md:      0 4px 6px rgba(15,23,42,0.08), 0 2px 4px rgba(15,23,42,0.04);
+  --shadow-lg:      0 10px 15px rgba(15,23,42,0.08), 0 4px 6px rgba(15,23,42,0.04);
+  --table-row:      36px;
+  --header-height:  56px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Sans 3', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13.5px;
+  line-height: 1.5;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,h2,h3,h4,h5 { font-family: 'Lexend', sans-serif; }
+
+/* ─── HEADER ─────────────────────────────── */
+.header {
+  background: var(--primary);
+  padding: 0 28px;
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.header-brand { display: flex; align-items: center; gap: 12px; }
+.header-logo {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Lexend', sans-serif;
+  font-size: 14px; font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+.header-text { display: flex; flex-direction: column; }
+.header-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  line-height: 1;
+}
+.header-title {
+  font-family: 'Lexend', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+.header-stats { display: flex; align-items: center; gap: 6px; }
+.stat-chip {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 20px;
+  padding: 3px 10px;
+  display: flex; align-items: center; gap: 5px;
+}
+.stat-chip-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; font-weight: 500;
+  color: #fff;
+}
+.stat-chip-label { font-size: 10px; color: rgba(255,255,255,0.5); }
+.header-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.05em;
+}
+
+/* ─── BREADCRUMB ────────────────────────── */
+.breadcrumb {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.breadcrumb a {
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+.breadcrumb a:hover { color: var(--accent-hover); text-decoration: underline; }
+.breadcrumb-sep { color: var(--border-strong); }
+.breadcrumb-current { color: var(--text-secondary); font-weight: 500; }
+
+/* ─── TOOLBAR ───────────────────────────── */
+.toolbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.search-wrap { position: relative; flex: 1; min-width: 220px; max-width: 360px; }
+.search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-faint); font-size: 12px; pointer-events: none; }
+.search-input {
+  width: 100%;
+  padding: 7px 10px 7px 30px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  transition: all 0.15s;
+}
+.search-input:focus { border-color: var(--accent); background: white; box-shadow: 0 0 0 3px rgba(3,105,161,0.1); }
+.search-input::placeholder { color: var(--text-faint); }
+.filter-group { display: flex; align-items: center; gap: 6px; }
+.filter-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+.filter-select {
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 12.5px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.filter-select:focus { border-color: var(--accent); }
+.btn { padding: 7px 14px; border-radius: var(--radius); font-family: 'Source Sans 3', sans-serif; font-size: 12.5px; font-weight: 500; cursor: pointer; transition: all 0.15s; border: 1px solid transparent; }
+.btn-ghost { background: transparent; border-color: var(--border); color: var(--text-secondary); }
+.btn-ghost:hover { background: var(--surface2); border-color: var(--border-strong); color: var(--text); }
+.btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+.btn-primary:hover { background: var(--accent-hover); }
+.toolbar-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+
+/* ─── RESULTS INFO ──────────────────────── */
+.results-bar {
+  padding: 8px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.results-bar span { color: var(--accent); font-weight: 500; }
+
+/* ─── TABLE ─────────────────────────────── */
+.table-wrap { padding: 0 28px 20px; }
+.table-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead { background: var(--surface2); }
+thead tr { border-bottom: 2px solid var(--border); }
+th {
+  padding: 10px 14px;
+  text-align: left;
+  font-family: 'Lexend', sans-serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s;
+}
+th:hover { color: var(--accent); }
+th.sort-asc::after { content: ' ↑'; color: var(--accent); }
+th.sort-desc::after { content: ' ↓'; color: var(--accent); }
+th.no-sort { cursor: default; }
+th.no-sort:hover { color: var(--text-muted); }
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+  cursor: pointer;
+  height: var(--table-row);
+}
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--accent-light); }
+td { padding: 8px 14px; vertical-align: middle; }
+
+.cell-grant { display: flex; flex-direction: column; gap: 1px; }
+.grant-num { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; color: var(--accent); white-space: nowrap; }
+.grant-short { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-faint); }
+.org-name { font-weight: 500; color: var(--text); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.proj-title { color: var(--text-secondary); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ─── BADGES ────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-family: 'Lexend', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.badge-DRE  { background: #DBEAFE; color: #1D4ED8; border-color: #BFDBFE; }
+.badge-EE   { background: #DCFCE7; color: #15803D; border-color: #86EFAC; }
+.badge-EDUC { background: #FEF3C7; color: #B45309; border-color: #FCD34D; }
+.badge-TRCC { background: #F3E8FF; color: #7C3AED; border-color: #DDD6FE; }
+.badge-year { background: var(--surface2); color: var(--text-muted); border-color: var(--border); font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 400; border-radius: 4px; }
+
+/* ─── SIGNAL BADGES ─────────────────────── */
+.signal {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.signal-0 { background: #DCFCE7; color: #15803D; border-color: #86EFAC; }
+.signal-1 { background: #D1FAE5; color: #065F46; border-color: #6EE7B7; }
+.signal-2 { background: #FEF3C7; color: #92400E; border-color: #FCD34D; }
+.signal-3 { background: #FFEDD5; color: #9A3412; border-color: #FDBA74; }
+.signal-4 { background: #FEE2E2; color: #991B1B; border-color: #FCA5A5; }
+.signal-5 { background: #1C0505; color: #F87171; border-color: #7F1D1D; }
+.signal-na { background: var(--surface2); color: var(--text-faint); border-color: var(--border); }
+
+/* ─── URL BUTTONS ───────────────────────── */
+.link-row { display: flex; align-items: center; gap: 4px; }
+.lbtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 12px;
+  transition: all 0.15s;
+  position: relative;
+  flex-shrink: 0;
+}
+.lbtn:hover { background: var(--accent); border-color: var(--accent); color: white; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.lbtn.off { opacity: 0.18; pointer-events: none; }
+.lbtn[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 5px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--primary);
+  color: white;
+  font-size: 10px;
+  font-family: 'Source Sans 3', sans-serif;
+  padding: 3px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  z-index: 100;
+  pointer-events: none;
+  box-shadow: var(--shadow-md);
+}
+
+/* ─── PAGINATION ────────────────────────── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 28px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.pg-info { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); }
+.pg-btns { display: flex; gap: 3px; }
+.pg-btn {
+  min-width: 30px; height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: white;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.pg-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+.pg-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+.pg-btn:disabled { opacity: 0.3; cursor: default; }
+
+/* ─── DETAIL LAYOUT ─────────────────────── */
+.detail { padding: 20px 28px; display: flex; flex-direction: column; gap: 18px; }
+
+.hero-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px 24px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 20px;
+  box-shadow: var(--shadow);
+}
+.hero-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); font-weight: 500; margin-bottom: 4px; }
+.hero-title { font-family: 'Lexend', sans-serif; font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; line-height: 1.25; margin-bottom: 4px; }
+.hero-org { font-size: 15px; color: var(--text-secondary); font-weight: 500; margin-bottom: 10px; }
+.hero-meta { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.hero-links { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
+.hero-link {
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 12px; font-weight: 500;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.hero-link:hover { background: var(--accent); border-color: var(--accent); color: white; }
+.hero-link.off { opacity: 0.25; pointer-events: none; }
+
+/* ─── SECTION ───────────────────────────── */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Lexend', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.section-head::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.panel-head {
+  background: var(--surface2);
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.panel-title {
+  font-family: 'Lexend', sans-serif;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.panel-sub { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-faint); }
+
+/* ─── CONTACTS ──────────────────────────── */
+.contacts-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.contact-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+.contact-role { font-family: 'Lexend', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 3px; }
+.contact-name { font-family: 'Lexend', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); }
+
+/* ─── FINANCIAL PANEL ───────────────────── */
+.fin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border-bottom: 1px solid var(--border); }
+.fin-cell {
+  padding: 16px 18px;
+  border-right: 1px solid var(--border);
+  position: relative;
+}
+.fin-cell:last-child { border-right: none; }
+.fin-label { font-family: 'Lexend', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+.fin-amount { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 500; color: var(--text); line-height: 1; }
+.fin-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.fin-pct {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 6px;
+}
+.pct-good  { background: var(--green-bg); color: var(--green); }
+.pct-warn  { background: var(--amber-bg); color: var(--amber); }
+.pct-risk  { background: var(--red-bg); color: var(--red); }
+.pct-na    { background: var(--surface2); color: var(--text-faint); }
+
+/* Progress bar */
+.prog-wrap { margin-top: 8px; }
+.prog-bar { height: 6px; background: var(--surface3); border-radius: 3px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+.prog-good { background: var(--green); }
+.prog-warn { background: var(--amber); }
+.prog-risk { background: var(--red); }
+
+/* Monthly table */
+.monthly-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.monthly-table th {
+  padding: 7px 10px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  font-family: 'Lexend', sans-serif;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: right;
+  white-space: nowrap;
+  cursor: default;
+}
+.monthly-table th:first-child { text-align: left; }
+.monthly-table td {
+  padding: 7px 10px;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+.monthly-table td:first-child {
+  text-align: left;
+  font-family: 'Lexend', sans-serif;
+  font-size: 11px; font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.monthly-table tr:last-child td { border-bottom: none; font-weight: 600; color: var(--text); background: var(--surface2); }
+.monthly-table .val-pos { color: var(--green); }
+.monthly-table .val-zero { color: var(--text-faint); }
+
+/* ─── INDIRECT COST PANEL ───────────────── */
+.ic-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-bottom: 1px solid var(--border); }
+.ic-row:last-child { border-bottom: none; }
+.ic-label { font-size: 13px; font-weight: 500; color: var(--text); display: flex; align-items: center; gap: 8px; }
+.ic-check { font-size: 15px; }
+.ic-value { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; color: var(--text); }
+.ic-rate { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 2px 8px; background: var(--accent-light); color: var(--accent); border-radius: 20px; border: 1px solid #BAE6FD; }
+
+/* ─── STATUS TABLES ─────────────────────── */
+.status-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.status-table th {
+  padding: 8px 12px;
+  text-align: center;
+  font-family: 'Lexend', sans-serif;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.status-table th.left { text-align: left; }
+.status-table td { padding: 8px 12px; text-align: center; border-bottom: 1px solid var(--surface2); }
+.status-table td.left { text-align: left; }
+.status-table tr:last-child td { border-bottom: none; }
+.status-table tr:hover td { background: var(--accent-light); }
+.status-icon { font-size: 15px; display: inline-block; }
+.status-null { color: var(--text-faint); font-size: 11px; font-family: 'JetBrains Mono', monospace; }
+.sub-link { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent); text-decoration: none; }
+.sub-link:hover { text-decoration: underline; }
+
+/* ─── LOADING / UPLOAD ──────────────────── */
+.state {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 60px 20px; gap: 12px;
+}
+.state-icon { font-size: 36px; opacity: 0.35; }
+.state-title { font-family: 'Lexend', sans-serif; font-size: 15px; font-weight: 600; color: var(--text-secondary); }
+.state-sub { font-size: 13px; color: var(--text-muted); text-align: center; max-width: 360px; line-height: 1.6; }
+.loader { width: 22px; height: 22px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.upload-area { padding: 20px 28px; display: flex; flex-direction: column; gap: 12px; }
+.upload-card {
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+}
+.upload-card:hover, .upload-card.drag { border-color: var(--accent); background: var(--accent-light); }
+.upload-card input { display: none; }
+.upload-icon { font-size: 26px; margin-bottom: 8px; opacity: 0.45; }
+.upload-title { font-family: 'Lexend', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.upload-sub { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+.upload-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.upload-mini {
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  padding: 14px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: white;
+}
+.upload-mini:hover { border-color: var(--accent); background: var(--accent-light); }
+.upload-mini input { display: none; }
+.upload-mini-icon { font-size: 18px; margin-bottom: 4px; }
+.upload-mini-title { font-family: 'Lexend', sans-serif; font-size: 12px; font-weight: 600; color: var(--text); }
+.upload-mini-status { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+.upload-mini-status.ok { color: var(--green); font-weight: 600; }
+
+/* ─── FOOTER ────────────────────────────── */
+.footer {
+  padding: 10px 28px;
+  background: var(--surface2);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-faint);
+}
+
+/* ─── UTILITY ───────────────────────────── */
+.divider-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-brand">
+    <div class="header-logo">VT</div>
+    <div class="header-text">
+      <div class="header-eyebrow">Vermont · SHSO · GEARS</div>
+      <div class="header-title" id="hdr-title">Grant Directory</div>
+    </div>
+  </div>
+  <div class="header-stats">
+    <div class="stat-chip"><span class="stat-chip-num" id="stat-grants">—</span><span class="stat-chip-label">Grants</span></div>
+    <div class="stat-chip"><span class="stat-chip-num" id="stat-fy">—</span><span class="stat-chip-label">FYs</span></div>
+    <div class="header-meta" id="hdr-meta">Loading...</div>
+  </div>
+</header>
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb" id="bc" style="display:none">
+  <a onclick="goList()">Grant Directory</a>
+  <span class="breadcrumb-sep">›</span>
+  <span class="breadcrumb-current" id="bc-text"></span>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- Loading -->
+  <div class="state" id="st-load">
+    <div class="loader"></div>
+    <div class="state-title">Loading grant data...</div>
+    <div class="state-sub">Fetching files from SharePoint</div>
+  </div>
+
+  <!-- Upload -->
+  <div class="upload-area" id="st-upload" style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:60px 28px;gap:20px">
+    <div style="text-align:center;max-width:520px">
+      <div style="font-size:36px;margin-bottom:12px;opacity:0.4">🔗</div>
+      <div style="font-family:'Lexend',sans-serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px">Paste your data link</div>
+      <div style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:20px">Paste the SharePoint link to <strong>grants_data.json</strong>.<br>You will be prompted to sign in with your M365 account.</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" id="json-url" placeholder="Paste your internal SharePoint link to grants_data.json"
+          style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius);font-family:'Source Sans 3',sans-serif;font-size:13px;color:var(--text);background:var(--bg);outline:none;transition:border-color 0.15s"
+          onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+        />
+        <button class="btn btn-primary" onclick="loadFromURL()">Load</button>
+      </div>
+      <div id="url-status" style="margin-top:10px;font-size:12px;color:var(--text-muted);min-height:18px"></div>
+      <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text-faint);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.06em;font-family:'Lexend',sans-serif;font-weight:600">Or load a local file</div>
+        <label style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:12.5px;font-weight:500;color:var(--text-secondary);background:var(--surface);transition:all 0.15s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--surface)'">
+          <input type="file" id="f-json" accept=".json" style="display:none" onchange="loadFromFile(this.files[0])" />
+          📂 Choose grants_data.json
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- List -->
+  <div id="view-list" style="display:none">
+    <div class="toolbar" id="toolbar">
+      <div class="filter-group">
+        <span class="filter-label">Search</span>
+        <div class="search-wrap">
+          <span class="search-icon">⊙</span>
+          <input type="text" class="search-input" id="q" placeholder="Grant, org, project, contact..." />
+        </div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Type</span>
+        <select class="filter-select" id="f-type"><option value="">All</option></select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">FY</span>
+        <select class="filter-select" id="f-fy"><option value="">All</option></select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Signal</span>
+        <select class="filter-select" id="f-sig">
+          <option value="">All</option>
+          <option value="0">SIGNAL 0</option>
+          <option value="1">SIGNAL 1</option>
+          <option value="2">SIGNAL 2</option>
+          <option value="3">SIGNAL 3</option>
+          <option value="4">SIGNAL 4</option>
+          <option value="5">SIGNAL 5</option>
+        </select>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn btn-ghost" id="btn-reset">Reset filters</button>
+      </div>
+    </div>
+    <div class="results-bar">
+      <span id="res-info"></span>
+      <span style="color:var(--text-faint)">Click row for details</span>
+    </div>
+    <div class="table-wrap">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th data-col="Grant Number">Grant #</th>
+              <th data-col="Grant Type">Type</th>
+              <th data-col="Sub Code">FY</th>
+              <th data-col="Organization">Organization</th>
+              <th data-col="Project Title">Project</th>
+              <th data-col="__signal" data-sort-num="1">Signal ▾</th>
+              <th class="no-sort">Links</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="pagination" id="pgn" style="display:none">
+      <div class="pg-info" id="pg-info"></div>
+      <div class="pg-btns" id="pg-btns"></div>
+    </div>
+  </div>
+
+  <!-- Detail -->
+  <div id="view-detail" style="display:none"></div>
+
+</div>
+
+<footer class="footer">
+  <span>SHSO GEARS · Grant Directory · Vermont Highway Safety Office</span>
+  <span id="ft-time"></span>
+</footer>
+
+<script>
+// ─────────────────────────────────────────────────────
+// CONFIG — set SharePoint URLs when deploying
+// ─────────────────────────────────────────────────────
+// Saved URL from last session (persists across browser opens)
+const SAVED_URL_KEY = "shso_grants_data_url";
+
+// ─────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────
+let grants = [], invoices = [], qtrs = [], financial = [], indirectData = [], supervisors = [];
+let filtered = [], curPage = 1;
+let sortCol = "__signal", sortDir = "asc", sortNum = true;
+const PER = 100;
+const today = new Date();
+
+// ─────────────────────────────────────────────────────
+// BOOT
+// ─────────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("ft-time").textContent = today.toLocaleString();
+
+  // Auto-load from saved URL if available
+  const savedURL = localStorage.getItem(SAVED_URL_KEY);
+  if (savedURL) {
+    document.getElementById("st-load").style.display = "flex";
+    fetchJSON(savedURL);
+  } else {
+    showUpload();
+  }
+
+  // Controls
+  document.getElementById("q").oninput        = () => { curPage=1; filter(); };
+  document.getElementById("f-type").onchange  = () => { curPage=1; filter(); };
+  document.getElementById("f-fy").onchange    = () => { curPage=1; filter(); };
+  document.getElementById("f-sig").onchange   = () => { curPage=1; filter(); };
+  document.getElementById("btn-reset").onclick = reset;
+
+  // Sort headers
+  document.querySelectorAll("th[data-col]").forEach(th => {
+    th.onclick = () => {
+      const c = th.dataset.col;
+      const n = !!th.dataset.sortNum;
+      if (sortCol === c) sortDir = sortDir==="asc" ? "desc" : "asc";
+      else { sortCol=c; sortDir="asc"; sortNum=n; }
+      document.querySelectorAll("th").forEach(t => t.classList.remove("sort-asc","sort-desc"));
+      th.classList.add(sortDir==="asc" ? "sort-asc" : "sort-desc");
+      filter();
+    };
+  });
+});
+
+// ─────────────────────────────────────────────────────
+// JSON LOADER — single file, all data
+// ─────────────────────────────────────────────────────
+async function loadFromURL() {
+  const url = document.getElementById("json-url").value.trim();
+  if (!url) return;
+  const el = document.getElementById("url-status");
+  el.style.color = "var(--text-muted)";
+  el.textContent = "Connecting…";
+  document.getElementById("st-upload").style.display = "none";
+  document.getElementById("st-load").style.display   = "flex";
+  await fetchJSON(url);
+}
+
+async function fetchJSON(url) {
+  try {
+    const r = await fetch(url, { credentials: "include" });
+    if (r.status === 401 || r.status === 403) {
+      // M365 auth redirect — open in new tab so user can sign in
+      window.open(url, "_blank");
+      document.getElementById("st-load").style.display = "none";
+      showUpload();
+      const el = document.getElementById("url-status");
+      if (el) { el.style.color = "var(--amber)"; el.textContent = "Sign in completed? Click Load again."; }
+      return;
+    }
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const data = await r.json();
+    ingestJSON(data, url);
+  } catch(e) {
+    console.warn("JSON fetch failed:", e);
+    document.getElementById("st-load").style.display = "none";
+    showUpload();
+    const el = document.getElementById("url-status");
+    if (el) { el.style.color = "var(--red)"; el.textContent = "Could not load file: " + e.message; }
+  }
+}
+
+function loadFromFile(file) {
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      ingestJSON(data, null);
+    } catch(err) {
+      alert("Invalid JSON file: " + err.message);
+    }
+  };
+  r.readAsText(file);
+}
+
+function ingestJSON(data, url) {
+  // Save URL for next session
+  if (url) localStorage.setItem(SAVED_URL_KEY, url);
+
+  // Populate all data arrays from the single JSON
+  grants       = data.grants      || [];
+  invoices     = data.invoices    || [];
+  qtrs         = data.qtrs        || [];
+  financial    = data.financial   || [];
+  indirectData = data.indirect    || [];
+  supervisors  = data.supervisors || [];
+
+  // Normalize QTR numbers (DRE vendor bug fix)
+  normalizeQTR();
+
+  // Update header meta
+  const gen = data.generated ? new Date(data.generated).toLocaleString() : "unknown";
+  const metaEl = document.getElementById("hdr-meta");
+  if (metaEl) metaEl.textContent = "Updated " + gen;
+
+  tryInit();
+}
+
+// fetchJSON() handles all data loading — see JSON LOADER section above
+
+// ─────────────────────────────────────────────────────
+// FILE HANDLERS
+// ─────────────────────────────────────────────────────
+function handleXLSX(file, type) {
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = e => processXLSX(e.target.result, type);
+  r.readAsArrayBuffer(file);
+}
+
+function processXLSX(buf, type) {
+  const wb = XLSX.read(buf, { type:"array" });
+
+  if (type === "summary") {
+    // Load Grant Summary sheet
+    grants = readSheet(wb, SHEETS.summary);
+    // Load Indirect Cost sheet — match any sheet containing "indirect" (case-insensitive)
+    const icSheet = wb.SheetNames.find(n => n.toLowerCase().includes("indirect"));
+    if (icSheet) indirectData = readSheet(wb, icSheet);
+    updateStats();
+    tryInit();
+  }
+}
+
+function readSheet(wb, name) {
+  const sn = wb.SheetNames.includes(name) ? name : wb.SheetNames[0];
+  return XLSX.utils.sheet_to_json(wb.Sheets[sn], { defval: "" });
+}
+
+function handleCSV(file, type) {
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    if (type === "invoices") {
+      invoices = parseCSV(e.target.result);
+      document.getElementById("st-inv").textContent = "✅ " + invoices.length + " rows";
+      document.getElementById("st-inv").className = "upload-mini-status ok";
+    } else {
+      qtrs = parseCSV(e.target.result);
+      normalizeQTR();
+      document.getElementById("st-qtr").textContent = "✅ " + qtrs.length + " rows";
+      document.getElementById("st-qtr").className = "upload-mini-status ok";
+    }
+    tryInit();
+  };
+  r.readAsText(file);
+}
+
+function handleFinancial(file) {
+  if (!file) return;
+  const r = new FileReader();
+  if (file.name.endsWith(".csv")) {
+    r.onload = e => {
+      financial = parseCSV(e.target.result);
+      document.getElementById("st-fin").textContent = "✅ " + financial.length + " rows";
+      document.getElementById("st-fin").className = "upload-mini-status ok";
+      tryInit();
+    };
+    r.readAsText(file);
+  } else {
+    r.onload = e => {
+      financial = readFinancial(e.target.result);
+      document.getElementById("st-fin").textContent = "✅ " + financial.length + " rows";
+      document.getElementById("st-fin").className = "upload-mini-status ok";
+      tryInit();
+    };
+    r.readAsArrayBuffer(file);
+  }
+}
+
+function handleSupervisors(file) {
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    const wb = XLSX.read(e.target.result, { type:"array" });
+    // Try common sheet names
+    const sn = wb.SheetNames.find(n => n.toLowerCase().includes("sheet") || n.toLowerCase().includes("report") || n.toLowerCase().includes("supervisor")) || wb.SheetNames[0];
+    supervisors = XLSX.utils.sheet_to_json(wb.Sheets[sn], { defval: "" });
+    const el = document.getElementById("st-sup");
+    if (el) { el.textContent = "✅ " + supervisors.length + " rows"; el.className = "upload-mini-status ok"; }
+    console.log("Supervisors loaded:", supervisors.length, "rows");
+    console.log("Columns:", supervisors.length > 0 ? Object.keys(supervisors[0]) : "none");
+  };
+  r.readAsArrayBuffer(file);
+}
+
+function readFinancial(buf) {
+  const wb = XLSX.read(buf, { type:"array" });
+  const sn = wb.SheetNames.includes("Sheet1") ? "Sheet1" : wb.SheetNames[0];
+  return XLSX.utils.sheet_to_json(wb.Sheets[sn], { defval: 0 });
+}
+
+function tryInit() {
+  if (grants.length) initAll();
+}
+
+function normalizeQTR() {
+  // Vendor bug fix: DREQTR1 → DRE-QTR1
+  qtrs = qtrs.map(r => {
+    let qn = str(r["QTR Number"]);
+    if (qn.startsWith("DRE") && !qn.startsWith("DRE-")) qn = "DRE-" + qn.slice(3);
+    return { ...r, "QTR Number": qn };
+  });
+}
+
+// ─────────────────────────────────────────────────────
+// PARSE CSV
+// ─────────────────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.trim().split("\n");
+  const hdrs = splitCSVLine(lines[0]);
+  return lines.slice(1).filter(l => l.trim()).map(line => {
+    const cols = splitCSVLine(line);
+    const row = {};
+    hdrs.forEach((h, i) => row[h] = (cols[i] || "").replace(/^"|"$/g, "").trim());
+    return row;
+  });
+}
+
+function splitCSVLine(line) {
+  const cols = []; let cur = "", inQ = false;
+  for (const c of line) {
+    if (c === '"') inQ = !inQ;
+    else if (c === ',' && !inQ) { cols.push(cur); cur = ""; }
+    else cur += c;
+  }
+  cols.push(cur);
+  return cols.map(c => c.replace(/^"|"$/g, "").trim());
+}
+
+// ─────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────
+function updateStats() {
+  const yrs = [...new Set(grants.map(r => str(r["Sub Code"] || r["Year"])).filter(Boolean))];
+  document.getElementById("stat-grants").textContent = grants.length;
+  document.getElementById("stat-fy").textContent     = yrs.length;
+  document.getElementById("hdr-meta").textContent    = "Updated " + today.toLocaleDateString();
+}
+
+function initAll() {
+  updateStats();
+  // Populate filter dropdowns
+  const types = [...new Set(grants.map(r => str(r["Grant Type"])).filter(Boolean))].sort();
+  const years = [...new Set(grants.map(r => str(r["Sub Code"]||r["Year"])).filter(Boolean))].sort((a,b) => b-a);
+  const ft = document.getElementById("f-type"), ff = document.getElementById("f-fy");
+  ft.innerHTML = '<option value="">All Types</option>';
+  ff.innerHTML = '<option value="">All Years</option>';
+  types.forEach(t => ft.innerHTML += `<option value="${t}">${t}</option>`);
+  years.forEach(y => ff.innerHTML += `<option value="${y}">FY${y}</option>`);
+  filter();
+  showList();
+}
+
+// ─────────────────────────────────────────────────────
+// FILTER + SORT
+// ─────────────────────────────────────────────────────
+function reset() {
+  document.getElementById("q").value = "";
+  document.getElementById("f-type").value = "";
+  document.getElementById("f-fy").value = "";
+  document.getElementById("f-sig").value = "";
+  curPage = 1; filter();
+}
+
+function filter() {
+  const q  = document.getElementById("q").value.toLowerCase();
+  const tp = document.getElementById("f-type").value;
+  const fy = document.getElementById("f-fy").value;
+  const sg = document.getElementById("f-sig").value;
+
+  filtered = grants.filter(r => {
+    const mq = !q ||
+      str(r["Grant Number"]).toLowerCase().includes(q) ||
+      str(r["Organization"]).toLowerCase().includes(q) ||
+      str(r["Project Title"]).toLowerCase().includes(q) ||
+      str(r["Project Director"]).toLowerCase().includes(q) ||
+      str(r["Authorizing Official"]).toLowerCase().includes(q);
+    const mt = !tp || r["Grant Type"] === tp;
+    const mf = !fy || str(r["Sub Code"]||r["Year"]) === str(fy);
+    const ms = !sg || calcSignal(str(r["Grant Number"]), parseInt(r["Sub Code"]||r["Year"])).level === parseInt(sg);
+    return mq && mt && mf && ms;
+  });
+
+  filtered.sort((a, b) => {
+    let va, vb;
+    if (sortCol === "__signal") {
+      va = calcSignal(str(a["Grant Number"]), parseInt(a["Sub Code"]||a["Year"])).level;
+      vb = calcSignal(str(b["Grant Number"]), parseInt(b["Sub Code"]||b["Year"])).level;
+      return sortDir === "asc" ? va - vb : vb - va;
+    }
+    va = str(a[sortCol]).toLowerCase();
+    vb = str(b[sortCol]).toLowerCase();
+    return sortDir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+
+  renderTable(); renderPagination();
+}
+
+// ─────────────────────────────────────────────────────
+// RENDER LIST
+// ─────────────────────────────────────────────────────
+function renderTable() {
+  const start = (curPage-1)*PER;
+  const rows  = filtered.slice(start, start+PER);
+  const tbody = document.getElementById("tbody");
+  tbody.innerHTML = "";
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-faint)">No grants match current filters.</td></tr>`;
+    document.getElementById("res-info").innerHTML = "Showing <span>0</span> results";
+    return;
+  }
+
+  rows.forEach(row => {
+    const gn = str(row["Grant Number"]);
+    const parts = gn.split("-");
+    const short = parts.length >= 5 ? parts[4] : "";
+    const fy = parseInt(row["Sub Code"]||row["Year"]||0);
+    const sig = calcSignal(gn, fy);
+    const tr = document.createElement("tr");
+    tr.onclick = () => showDetail(gn);
+    tr.innerHTML = `
+      <td><div class="cell-grant"><div class="grant-num">${esc(gn)}</div><div class="grant-short">${esc(short)}</div></div></td>
+      <td><span class="badge badge-${esc(str(row["Grant Type"]))}">${esc(str(row["Grant Type"])||"—")}</span></td>
+      <td><span class="badge badge-year">FY${fy||"—"}</span></td>
+      <td><div class="org-name" title="${esc(str(row['Organization']))}"><a onclick="event.stopPropagation();showGI(this.dataset.org)" data-org="${esc(str(row['Organization']))}" style="color:var(--accent);cursor:pointer;text-decoration:none;font-weight:600" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${esc(str(row["Organization"])||"—")}</a></div></td>
+      <td><div class="proj-title" title="${esc(str(row["Project Title"]))}">${esc(str(row["Project Title"])||"—")}</div></td>
+      <td><span class="signal signal-${sig.level}">${sig.label}</span></td>
+      <td>
+        <div class="link-row">
+          ${lbtn(row["Landing Page URL"],    "🏠","Landing Page")}
+          ${lbtn(row["Grant Agreement URL"], "📄","Grant Agreement")}
+          ${lbtn(row["Project Details URL"], "📋","Project Details")}
+          ${lbtn(row["Indirect Costs URL"],  "💰","Indirect Costs")}
+          ${lbtn(row["Scoring Sheet URL"],   "⭐","Scoring Sheet")}
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+
+  const total = filtered.length, end = Math.min(start+PER, total);
+  document.getElementById("res-info").innerHTML = `Showing <span>${start+1}–${end}</span> of <span>${total}</span> grants`;
+}
+
+function renderPagination() {
+  const total = filtered.length, pages = Math.ceil(total/PER);
+  const pg = document.getElementById("pgn");
+  if (pages <= 1) { pg.style.display="none"; return; }
+  pg.style.display = "flex";
+  document.getElementById("pg-info").textContent = `Page ${curPage} of ${pages}`;
+  const pb = document.getElementById("pg-btns");
+  pb.innerHTML = "";
+  const add = (lbl, p, act, dis) => {
+    const b = document.createElement("button");
+    b.className = "pg-btn" + (act?" active":""); b.textContent=lbl; b.disabled=dis;
+    b.onclick = () => { curPage=p; renderTable(); renderPagination(); window.scrollTo(0,0); };
+    pb.appendChild(b);
+  };
+  add("←", curPage-1, false, curPage===1);
+  let s=Math.max(1,curPage-2), e=Math.min(pages,s+4);
+  if (e-s<4) s=Math.max(1,e-4);
+  for (let i=s;i<=e;i++) add(i,i,i===curPage,false);
+  add("→", curPage+1, false, curPage===pages);
+}
+
+// ─────────────────────────────────────────────────────
+// DETAIL VIEW
+// ─────────────────────────────────────────────────────
+function showDetail(gn) {
+  const grant = grants.find(r => r["Grant Number"] === gn);
+  if (!grant) return;
+
+  const fy        = parseInt(grant["Sub Code"]||grant["Year"]||0);
+  const sig       = calcSignal(gn, fy);
+  const gInv      = invoices.filter(r => r["Parent Grant Number"] === gn);
+  const gQTR      = qtrs.filter(r => r["Parent Grant Number"] === gn);
+  const finRow    = financial.find(r => str(r["Grant Number"]) === gn || str(r["Document Name"]) === gn);
+  const icRow     = indirectData.find(r => str(r["Grant Number"]) === gn);
+  const qtrStatus = calcQTRStatus(gQTR, fy);
+  const invStatus = calcINVStatus(gInv, fy);
+
+  // Budget figures
+  const apvTotal  = num(grant["Apv Program Total"] || grant["Apv Total"]);
+  const apvMatch  = num(grant["Apv Match Total"]);
+  const apvIC     = num(grant["Apv Indirect Costs"] || grant["Apv Total Indirect"]);
+
+  // Actuals from financial
+  const MONTHS = ["October","November","December","January","February","March","April","May","June","July","August","September"];
+  let actTotal = 0, actMatch = 0;
+  if (finRow) {
+    MONTHS.forEach(m => {
+      actTotal += num(finRow["Monthly " + m] || finRow["Monthly" + m] || 0);
+      actMatch += num(finRow["Monthly " + m + " Match"] || finRow["Monthly" + m + "Match"] || 0);
+    });
+  }
+
+  const pctUsed  = apvTotal  > 0 ? actTotal / apvTotal  : null;
+  const pctMatch = apvMatch  > 0 ? actMatch / apvMatch  : null;
+
+  // IC check
+  const icApproved = icRow && (str(icRow["Has Approved Rate"]).toLowerCase()==="yes" || num(icRow["Approved ICR Rate"]) > 0);
+  const icRate     = icRow ? num(icRow["Approved ICR Rate"]) : 0;
+  const icTotal    = icRow ? num(icRow["Total Indirect Costs"]) : 0;
+
+  document.getElementById("bc").style.display = "flex";
+  document.getElementById("bc-text").textContent = gn;
+  document.getElementById("hdr-title").textContent = "Grant Detail";
+
+  const dv = document.getElementById("view-detail");
+  dv.innerHTML = `
+  <div class="detail">
+
+    <!-- HERO -->
+    <div class="hero-card">
+      <div>
+        <div class="hero-eyebrow">${esc(gn)}</div>
+        <div class="hero-title">${esc(str(grant["Project Title"])||"—")}</div>
+        <div class="hero-org" style="display:flex;align-items:center;gap:10px">
+          ${esc(str(grant["Organization"])||"—")}
+          <button onclick="showGI('${esc(str(grant['Organization']))}')" style="padding:3px 10px;border-radius:20px;border:1px solid var(--accent);background:var(--accent-light);color:var(--accent);font-family:'Lexend',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s" onmouseover="this.style.background='var(--accent)';this.style.color='white'" onmouseout="this.style.background='var(--accent-light)';this.style.color='var(--accent)'">
+            ↗ Organization View
+          </button>
+        </div>
+        <div class="hero-meta">
+          <span class="badge badge-${esc(str(grant["Grant Type"]))}">${esc(str(grant["Grant Type"])||"—")}</span>
+          <span class="badge badge-year">FY${fy}</span>
+          <span class="signal signal-${sig.level}">${sig.label}</span>
+        </div>
+      </div>
+      <div class="hero-links">
+        ${heroLink(grant["Landing Page URL"],    "🏠", "Landing Page")}
+        ${heroLink(grant["Grant Agreement URL"], "📄", "Grant Agreement")}
+        ${heroLink(grant["Project Details URL"], "📋", "Project Details")}
+        ${heroLink(grant["Indirect Costs URL"],  "💰", "Indirect Costs")}
+        ${heroLink(grant["Scoring Sheet URL"],   "⭐", "Scoring Sheet")}
+      </div>
+    </div>
+
+    <!-- CONTACTS -->
+    <div class="section-head">Contacts</div>
+    <div class="contacts-row">
+      ${contactCard("Authorizing Official", grant["Authorizing Official"])}
+      ${contactCard("Project Director",     grant["Project Director"])}
+      ${contactCard("Financial Officer",    grant["Financial Officer"])}
+    </div>
+
+    <!-- FINANCIAL PANEL -->
+    <div class="section-head">Budget & Expenditure</div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Financial Summary</div>
+        <div class="panel-sub">${finRow ? "SHSO Financial Report · " + str(finRow["EA"] || "") : "Financial data not loaded"}</div>
+      </div>
+      <div class="fin-grid">
+        ${finCell("Approved Budget", apvTotal, null, null, "Total approved program budget")}
+        ${finCell("Expended", actTotal, apvTotal > 0 ? actTotal/apvTotal : null, apvTotal, "Actual cash disbursed")}
+        ${finCell("Remaining", apvTotal > 0 ? apvTotal - actTotal : null, null, null, "Unspent budget")}
+      </div>
+      ${apvMatch > 0 ? `
+      <div class="fin-grid" style="border-top:1px solid var(--border)">
+        ${finCell("Match Approved", apvMatch, null, null, "Approved match requirement")}
+        ${finCell("Match Actual", actMatch, apvMatch > 0 ? actMatch/apvMatch : null, apvMatch, "Actual match recorded")}
+        ${finCell("Match Remaining", apvMatch - actMatch, null, null, "Outstanding match balance")}
+      </div>` : ""}
+      ${finRow ? monthlyTable(finRow, MONTHS) : ""}
+    </div>
+
+    <!-- INDIRECT COST -->
+    ${icPanel(icRow)}
+
+    <!-- QTR REPORTS -->
+    <div class="section-head">Quarterly Reports</div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">AOT Monitoring — Quarterly Reports</div>
+        <div class="panel-sub">${gQTR.length} report(s) on record</div>
+      </div>
+      <table class="status-table">
+        <thead><tr>
+          <th class="left">Period</th>
+          <th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>FR</th>
+        </tr></thead>
+        <tbody><tr>
+          <td class="left" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-faint)">FY${fy}</td>
+          ${["QTR1","QTR2","QTR3","QTR4","QTR5"].map(q=>`<td>${qtrCell(q,qtrStatus,gQTR)}</td>`).join("")}
+        </tr></tbody>
+      </table>
+      ${gQTR.length ? qtrDetailTable(gQTR) : ""}
+    </div>
+
+    <!-- INVOICES -->
+    <div class="section-head">Invoice Activity</div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">AOT Invoices — Monthly Status</div>
+        <div class="panel-sub">${gInv.length} invoice(s) on record</div>
+      </div>
+      <table class="status-table">
+        <thead><tr>
+          <th class="left">Period</th>
+          ${["Oct","Nov","Dec","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep"].map(m=>`<th>${m}</th>`).join("")}
+        </tr></thead>
+        <tbody><tr>
+          <td class="left" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-faint)">FY${fy}</td>
+          ${["Oct","Nov","Dec","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep"].map(m=>`<td>${invCell(m,invStatus,gInv)}</td>`).join("")}
+        </tr></tbody>
+      </table>
+      ${gInv.length ? invDetailTable(gInv) : ""}
+    </div>
+
+    ${supervisorPanel(gn, grant["Grant Type"])}
+
+  </div>`;
+
+  document.getElementById("view-list").style.display   = "none";
+  document.getElementById("view-detail").style.display = "block";
+  window.scrollTo(0, 0);
+}
+
+// ─────────────────────────────────────────────────────
+// FINANCIAL HELPERS
+// ─────────────────────────────────────────────────────
+function finCell(label, amount, pct, budget, sub) {
+  const hasAmt = amount !== null && amount !== undefined && !isNaN(amount);
+  let pctClass = "pct-na", pctText = "N/A";
+  if (pct !== null && pct !== undefined) {
+    pctText = (pct*100).toFixed(1) + "%";
+    pctClass = pct >= 0.92 ? "pct-good" : pct >= 0.5 ? "pct-warn" : "pct-risk";
+  }
+  let progClass = pctClass.replace("pct-","prog-");
+  return `
+  <div class="fin-cell">
+    <div class="fin-label">${esc(label)}</div>
+    <div class="fin-amount">${hasAmt ? fmt(amount) : "—"}</div>
+    <div class="fin-sub">${esc(sub)}</div>
+    ${pct !== null && pct !== undefined ? `
+    <span class="fin-pct ${pctClass}">${pctText}</span>
+    <div class="prog-wrap">
+      <div class="prog-bar"><div class="prog-fill ${progClass}" style="width:${Math.min(pct*100,100).toFixed(1)}%"></div></div>
+    </div>` : ""}
+  </div>`;
+}
+
+function monthlyTable(row, months) {
+  const short = ["OCT","NOV","DEC","JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP"];
+  const vals  = months.map(m => num(row["Monthly " + m] || row["Monthly"+m] || 0));
+  const matchVals = months.map(m => num(row["Monthly " + m + " Match"] || row["Monthly"+m+"Match"] || 0));
+  const hasMatch  = matchVals.some(v => v > 0);
+  const total = vals.reduce((a,b)=>a+b,0);
+  const mTotal = matchVals.reduce((a,b)=>a+b,0);
+
+  return `
+  <div style="overflow-x:auto">
+  <table class="monthly-table">
+    <thead><tr>
+      <th>Row</th>
+      ${short.map(m=>`<th>${m}</th>`).join("")}
+      <th>Total</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td>Expended</td>
+        ${vals.map(v=>`<td class="${v>0?"val-pos":"val-zero"}">${v>0?fmt(v):"—"}</td>`).join("")}
+        <td>${fmt(total)}</td>
+      </tr>
+      ${hasMatch ? `<tr>
+        <td>Match</td>
+        ${matchVals.map(v=>`<td class="${v>0?"val-pos":"val-zero"}">${v>0?fmt(v):"—"}</td>`).join("")}
+        <td>${fmt(mTotal)}</td>
+      </tr>` : ""}
+    </tbody>
+  </table>
+  </div>`;
+}
+
+function qtrDetailTable(rows) {
+  return `<table class="status-table">
+    <thead><tr>
+      <th class="left">Report Number</th>
+      <th class="left">Period</th>
+      <th>Status</th>
+      <th>Link</th>
+    </tr></thead>
+    <tbody>${rows.map(q=>`<tr>
+      <td class="left"><span style="font-family:'JetBrains Mono',monospace;font-size:11px">${esc(str(q["QTR Number"]))}</span></td>
+      <td class="left" style="color:var(--text-secondary)">${esc(str(q["QTR Period"]))}</td>
+      <td><span style="font-size:11px;color:var(--green)">${esc(str(q["QTR Status"]))}</span></td>
+      <td>${str(q["QTR URL"]).startsWith("http")?`<a class="lbtn" href="${esc(str(q["QTR URL"]))}" target="_blank" data-tip="Open Report">🔗</a>`:'<span class="status-null">—</span>'}</td>
+    </tr>`).join("")}</tbody>
+  </table>`;
+}
+
+function invDetailTable(rows) {
+  return `<table class="status-table">
+    <thead><tr>
+      <th class="left">Invoice Number</th>
+      <th class="left">Period</th>
+      <th>Status</th>
+      <th>Link</th>
+    </tr></thead>
+    <tbody>${rows.map(inv=>`<tr>
+      <td class="left"><span style="font-family:'JetBrains Mono',monospace;font-size:11px">${esc(str(inv["Invoice Number"]))}</span></td>
+      <td class="left" style="color:var(--text-secondary)">${esc(str(inv["Invoice Period"]))}</td>
+      <td><span style="font-size:11px;color:var(--green)">${esc(str(inv["Invoice Status"]))}</span></td>
+      <td>${str(inv["Invoice URL"]).startsWith("http")?`<a class="lbtn" href="${esc(str(inv["Invoice URL"]))}" target="_blank" data-tip="Open Invoice">🔗</a>`:'<span class="status-null">—</span>'}</td>
+    </tr>`).join("")}</tbody>
+  </table>`;
+}
+
+// ─────────────────────────────────────────────────────
+// STATUS CELLS
+// ─────────────────────────────────────────────────────
+function qtrCell(q, status, rows) {
+  const sub = rows.some(r => { const p=str(r["QTR Number"]).split("-"); return p.length>=2 && p[1]===q; });
+  if (sub) return `<span class="status-icon">✅</span>`;
+  const f = status[q];
+  if (!f) return `<span class="status-null">—</span>`;
+  return `<span class="status-icon">${f==="WARNING"?"⚠️":f==="ESCALATION"?"⁉️":"🚩"}</span>`;
+}
+
+function invCell(month, status, rows) {
+  const sub = rows.some(r => {
+    const p = str(r["Invoice Number"]).split("-");
+    return p.length>=3 && p[2]===month && str(r["Invoice Status"])!=="Invoice In Process";
+  });
+  if (sub) return `<span class="status-icon">✅</span>`;
+  const f = status[month];
+  if (!f) return `<span class="status-null">—</span>`;
+  return `<span class="status-icon">${f==="WARNING"?"⚠️":f==="ESCALATION"?"⁉️":"🚩"}</span>`;
+}
+
+// ─────────────────────────────────────────────────────
+// IC PANEL
+// ─────────────────────────────────────────────────────
+function icPanel(icRow) {
+  if (!icRow) return "";
+  const charged  = num(icRow["ICR Charged on Grant"]);
+  if (charged <= 0) return "";  // No IC approved — show nothing
+  const approved = num(icRow["Approved ICR Rate"]);
+  const totalIC  = num(icRow["Total Indirect Costs"]);
+  const mtdc     = num(icRow["Sum Indirect Cost Base"]);
+  const hasIC    = charged > 0;
+  const stdCats = [
+    ["Salaries & Benefits", "Salaries Cost",        "Indirect – Salaries"],
+    ["Contract Services",   "Contract Cost",        "Indirect – Contract"],
+    ["Supplies",            "Supplies Cost",        "Indirect – Supplies"],
+    ["Travel",              "Travel Cost",          "Indirect – Travel"],
+    ["Other Operating",     "Other Operating Cost", "Indirect – Other Operating"],
+    ["Equipment",           "Equipment Cost",       null],
+  ];
+  const eeCats = [
+    ["EE OP Total",  "EE OP Total"],
+    ["EE DUI Total", "EE DUI Total"],
+    ["EE DD Total",  "EE DD Total"],
+    ["EE Equipment", "EE Equipment Total"],
+  ];
+  const hasEE = eeCats.some(([,col]) => num(icRow[col]) > 0);
+  const checkRow = (label, costVal, indAmt) => {
+    const hasCost = num(costVal) > 0;
+    const indNum  = indAmt !== null ? num(indAmt) : null;
+    return `<tr style="border-bottom:1px solid var(--surface2)">
+      <td style="padding:8px 10px;font-size:13px;color:var(--text-secondary);font-weight:500">${label}</td>
+      <td style="text-align:center;padding:8px 10px">
+        ${hasCost
+          ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;background:var(--green-bg);border:1px solid var(--green-border);border-radius:5px;font-size:13px">✅</span>`
+          : `<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text-faint);font-size:11px">—</span>`}
+      </td>
+      <td style="text-align:right;padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:${indNum>0?'var(--green)':'var(--text-faint)'}">
+        ${indNum !== null ? (indNum > 0 ? fmt(indNum) : "—") : ""}
+      </td>
+    </tr>`;
+  };
+  const colHead = `<thead><tr>
+    <th style="padding:7px 10px;text-align:left;font-family:'Lexend',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border)">Category</th>
+    <th style="padding:7px 10px;text-align:center;font-family:'Lexend',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border)">Has Cost</th>
+    <th style="padding:7px 10px;text-align:right;font-family:'Lexend',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border)">IC Amount</th>
+  </tr></thead>`;
+  return `
+    <div class="section-head">Indirect Cost</div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Indirect Cost Detail</div>
+        <div class="panel-sub">${str(icRow["Indirect Costs URL"]).startsWith("http")
+          ? `<a href="${esc(str(icRow["Indirect Costs URL"]))}" target="_blank" style="color:var(--accent);font-size:10px">View IC Document ↗</a>`
+          : "No link available"}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--border)">
+        <div class="fin-cell">
+          <div class="fin-label">ICR Charged on Grant</div>
+          <div class="fin-amount" style="font-size:26px">${charged > 0 ? charged.toFixed(2) + "%" : "—"}</div>
+          <div class="fin-sub">Rate applied to this grant</div>
+          ${hasIC ? `<span class="fin-pct pct-good" style="margin-top:6px">✅ Active</span>` : `<span class="fin-pct pct-na" style="margin-top:6px">⬜ No IC</span>`}
+        </div>
+        <div class="fin-cell">
+          <div class="fin-label">Approved ICR Rate (Org)</div>
+          <div class="fin-amount" style="font-size:26px;color:var(--text-secondary)">${approved > 0 ? approved.toFixed(2) + "%" : "—"}</div>
+          <div class="fin-sub">Organization's approved rate</div>
+        </div>
+        <div class="fin-cell">
+          <div class="fin-label">Total Indirect Costs</div>
+          <div class="fin-amount" style="font-size:22px">${totalIC > 0 ? fmt(totalIC) : "—"}</div>
+          <div class="fin-sub">Total approved IC budget</div>
+        </div>
+        <div class="fin-cell" style="border-right:none">
+          <div class="fin-label">IC Cost Base (MTDC)</div>
+          <div class="fin-amount" style="font-size:22px">${mtdc > 0 ? fmt(mtdc) : "—"}</div>
+          <div class="fin-sub">Sum of indirect cost base</div>
+        </div>
+      </div>
+      <div style="padding:14px 18px">
+        <div style="font-family:'Lexend',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Cost Categories — IC Applied</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">
+          <table style="border-collapse:collapse;width:100%">
+            ${colHead}<tbody>
+              ${stdCats.slice(0,3).map(([label,costCol,indCol]) => checkRow(label, icRow[costCol], indCol ? icRow[indCol] : null)).join("")}
+            </tbody>
+          </table>
+          <table style="border-collapse:collapse;width:100%">
+            ${colHead}<tbody>
+              ${stdCats.slice(3).map(([label,costCol,indCol]) => checkRow(label, icRow[costCol], indCol ? icRow[indCol] : null)).join("")}
+              ${hasEE ? eeCats.map(([label,col]) => checkRow(label, icRow[col], null)).join("") : ""}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ─────────────────────────────────────────────────────
+// COMPLIANCE LOGIC (mirrors DAX)
+// ─────────────────────────────────────────────────────
+function calcSignal(gn, fy) {
+  if (!fy || !gn) return { level:"na", label:"—" };
+  const gInv = invoices.filter(r => r["Parent Grant Number"]===gn && str(r["Invoice Status"])!=="Invoice In Process");
+  const gQTR = qtrs.filter(r => r["Parent Grant Number"]===gn);
+  const invS = calcINVStatus(gInv, fy);
+  const qtrS = calcQTRStatus(gQTR, fy);
+  const invMiss = Object.values(invS).filter(v=>v!==null).length;
+  const qtrMiss = Object.values(qtrS).filter(v=>v!==null).length;
+  const invDue  = countDueMonths(fy);
+  const qtrDue  = countDueQTRs(fy);
+  const invSub  = countInvSub(gInv);
+  const qtrSub  = countQTRSub(gQTR);
+  const invRate = invDue > 0 ? invSub/invDue : 1;
+  const qtrRate = qtrDue > 0 ? qtrSub/qtrDue : 1;
+  let score = Math.round(((1-qtrRate)*0.60 + (1-invRate)*0.40)*100);
+  const consec = Object.values(qtrS).filter(v=>v!==null).length;
+  if (consec >= 2) score += 15;
+  if (invMiss===0 && qtrMiss===0) score -= 10;
+  score = Math.max(0, Math.min(100, score));
+  if (invMiss===0 && qtrMiss===0 && invDue>0) return {level:0, label:"SIGNAL 0"};
+  if (score<=10)  return {level:1, label:"SIGNAL 1"};
+  if (score<=30)  return {level:2, label:"SIGNAL 2"};
+  if (score<=55)  return {level:3, label:"SIGNAL 3"};
+  if (score<=80)  return {level:4, label:"SIGNAL 4"};
+  return {level:5, label:"SIGNAL 5"};
+}
+
+function calcINVStatus(gInv, fy) {
+  const t=today, py=fy-1, s={};
+  const sub = m => gInv.some(r=>{ const p=str(r["Invoice Number"]).split("-"); return p.length>=3&&p[2]===m; });
+  const octS = sub("Oct");
+  if (!octS) { s["Oct"] = t>=new Date(py,10,1) ? "WARNING" : null; }
+  const novS = sub("Nov");
+  if (!novS) {
+    const w=new Date(py,11,1), e=new Date(py,11,15), o=new Date(fy,0,1);
+    s["Nov"] = t<w ? null : octS ? (t<e?"WARNING":t<o?"ESCALATION":"OVERDUE") : "WARNING";
+  }
+  const decS = sub("Dec");
+  if (!decS) {
+    const w=new Date(fy,0,1), e=new Date(fy,0,15), o=new Date(fy,1,1);
+    s["Dec"] = t<w ? null : (octS||sub("Nov")) ? (t<e?"WARNING":t<o?"ESCALATION":"OVERDUE") : "WARNING";
+  }
+  [["Jan",new Date(fy,1,1),new Date(fy,1,15),new Date(fy,2,1)],
+   ["Feb",new Date(fy,2,1),new Date(fy,2,15),new Date(fy,3,1)],
+   ["Mar",new Date(fy,3,1),new Date(fy,3,15),new Date(fy,4,1)],
+   ["Apr",new Date(fy,4,1),new Date(fy,4,15),new Date(fy,5,1)],
+   ["May",new Date(fy,5,1),new Date(fy,5,15),new Date(fy,6,1)],
+   ["Jun",new Date(fy,6,1),new Date(fy,6,15),new Date(fy,7,1)],
+   ["Jul",new Date(fy,7,1),new Date(fy,7,15),new Date(fy,8,1)],
+   ["Aug",new Date(fy,8,1),new Date(fy,8,15),new Date(fy,9,1)],
+   ["Sep",new Date(fy,9,1),new Date(fy,9,11),new Date(fy,9,21)]
+  ].forEach(([m,w,e,o])=>{ if(!sub(m)) s[m]=t<w?null:t<e?"WARNING":t<o?"ESCALATION":"OVERDUE"; });
+  return s;
+}
+
+function calcQTRStatus(gQTR, fy) {
+  const t=today, s={};
+  const sub = q => gQTR.some(r=>{ const p=str(r["QTR Number"]).split("-"); return p.length>=2&&p[1]===q; });
+  [["QTR1",new Date(fy,0,15),new Date(fy,0,21),new Date(fy,1,1)],
+   ["QTR2",new Date(fy,3,1), new Date(fy,3,15),new Date(fy,4,1)],
+   ["QTR3",new Date(fy,6,1), new Date(fy,6,15),new Date(fy,7,1)],
+   ["QTR4",new Date(fy,9,1), new Date(fy,9,15),new Date(fy,10,1)],
+   ["QTR5",new Date(fy,10,1),new Date(fy,10,7),new Date(fy,10,15)]
+  ].forEach(([q,w,e,o])=>{ if(!sub(q)) s[q]=t<w?null:t<e?"WARNING":t<o?"ESCALATION":"OVERDUE"; });
+  return s;
+}
+
+function countDueMonths(fy) {
+  const t=today, py=fy-1; let n=0;
+  [[py,10],[py,11],[fy,0],[fy,1],[fy,2],[fy,3],[fy,4],[fy,5],[fy,6],[fy,7],[fy,8],[fy,9]]
+    .forEach(([y,m]) => { if(t>=new Date(y,m+1,1)) n++; });
+  // Simplified: just check first of following month
+  if(t>=new Date(py,10,1))n++;  if(t>=new Date(py,11,1))n++;
+  if(t>=new Date(fy,0,1))n++;   if(t>=new Date(fy,1,1))n++;
+  if(t>=new Date(fy,2,1))n++;   if(t>=new Date(fy,3,1))n++;
+  if(t>=new Date(fy,4,1))n++;   if(t>=new Date(fy,5,1))n++;
+  if(t>=new Date(fy,6,1))n++;   if(t>=new Date(fy,7,1))n++;
+  if(t>=new Date(fy,8,1))n++;   if(t>=new Date(fy,9,1))n++;
+  return Math.min(n, 12);
+}
+
+function countDueQTRs(fy) {
+  const t=today; let n=0;
+  if(t>=new Date(fy,0,15))n++; if(t>=new Date(fy,3,1))n++;
+  if(t>=new Date(fy,6,1))n++;  if(t>=new Date(fy,9,1))n++;
+  if(t>=new Date(fy,10,1))n++;
+  return n;
+}
+
+function countInvSub(gInv) {
+  return ["Oct","Nov","Dec","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep"]
+    .filter(m => gInv.some(r=>{ const p=str(r["Invoice Number"]).split("-"); return p.length>=3&&p[2]===m; })).length;
+}
+
+function countQTRSub(gQTR) {
+  return ["QTR1","QTR2","QTR3","QTR4","QTR5"]
+    .filter(q => gQTR.some(r=>{ const p=str(r["QTR Number"]).split("-"); return p.length>=2&&p[1]===q; })).length;
+}
+
+// ─────────────────────────────────────────────────────
+// UI HELPERS
+// ─────────────────────────────────────────────────────
+function goList() {
+  document.getElementById("view-detail").style.display = "none";
+  document.getElementById("view-list").style.display   = "block";
+  document.getElementById("bc").style.display          = "none";
+  document.getElementById("hdr-title").textContent     = "Grant Directory";
+  window.scrollTo(0, 0);
+}
+
+function showList() {
+  document.getElementById("st-load").style.display   = "none";
+  document.getElementById("st-upload").style.display = "none";
+  document.getElementById("view-list").style.display = "block";
+  document.getElementById("bc").style.display        = "none";
+}
+
+function showUpload() {
+  document.getElementById("st-load").style.display   = "none";
+  document.getElementById("st-upload").style.display = "flex";
+  document.getElementById("hdr-meta").textContent    = "Manual upload";
+}
+
+function lbtn(url, icon, tip) {
+  const u = str(url);
+  if (!u.startsWith("http")) return `<span class="lbtn off">${icon}</span>`;
+  return `<a class="lbtn" href="${esc(u)}" target="_blank" rel="noopener" data-tip="${tip}" onclick="event.stopPropagation()">${icon}</a>`;
+}
+
+function heroLink(url, icon, label) {
+  const u = str(url);
+  if (!u.startsWith("http")) return `<span class="hero-link off">${icon} ${label}</span>`;
+  return `<a class="hero-link" href="${esc(u)}" target="_blank" rel="noopener">${icon} ${label}</a>`;
+}
+
+function contactCard(role, name) {
+  return `<div class="contact-card">
+    <div class="contact-role">${role}</div>
+    <div class="contact-name">${esc(str(name)||"—")}</div>
+  </div>`;
+}
+
+function fmt(n) {
+  if (n === null || n === undefined || isNaN(n)) return "—";
+  return new Intl.NumberFormat("en-US", { style:"currency", currency:"USD", minimumFractionDigits:2, maximumFractionDigits:2 }).format(n);
+}
+
+function num(v) {
+  if (v === null || v === undefined || v === "") return 0;
+  return parseFloat(str(v).replace(/[$,\s]/g,"")) || 0;
+}
+
+function str(v)  { return v===null||v===undefined ? "" : String(v); }
+function esc(s)  { return str(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+// ─────────────────────────────────────────────────────
+// GRANTEE INTELLIGENCE
+// ─────────────────────────────────────────────────────
+
+function showGI(orgName) {
+  const orgGrants = grants.filter(r => str(r["Organization"]) === orgName);
+  if (!orgGrants.length) return;
+
+  // FY list for toggle
+  const fyList = [...new Set(orgGrants.map(r => str(r["Sub Code"]||r["Year"])).filter(Boolean))].sort((a,b)=>b-a);
+
+  document.getElementById("bc").style.display = "flex";
+  document.getElementById("bc-text").textContent = orgName + " — Grantee Intelligence";
+  document.getElementById("hdr-title").textContent = "Grantee Intelligence";
+  document.getElementById("view-list").style.display   = "none";
+  document.getElementById("view-detail").style.display = "block";
+
+  renderGI(orgName, orgGrants, fyList, "");
+}
+
+function renderGI(orgName, orgGrants, fyList, fyFilter) {
+  // Normalize fyList — may arrive as comma-separated string from inline onclick buttons
+  if (typeof fyList === "string") fyList = fyList.split(",").filter(Boolean);
+  const filtered = fyFilter ? orgGrants.filter(r => str(r["Sub Code"]||r["Year"]) === fyFilter) : orgGrants;
+
+  // ── SCORE CALCULATION ──────────────────────────────
+  // 1. Financial Utilization (25%) — avg budget used
+  // RULE: Current FY grants are excluded from utilization scoring because
+  // spending is distributed unevenly through the year — some spend in summer,
+  // some at year end. Only score past FY grants where the year is complete.
+  const currentFY = today.getMonth() >= 9 ? today.getFullYear() + 1 : today.getFullYear();
+  let finScores = [];
+  filtered.forEach(r => {
+    const gn  = str(r["Grant Number"]);
+    const fy  = parseInt(r["Sub Code"]||r["Year"]||0);
+    // Skip current FY — cannot penalize for incomplete spending year
+    if (fy >= currentFY) return;
+    const apv = num(r["Apv Program Total"]||r["Apv Total"]);
+    const finRow = financial.find(f => str(f["Grant Number"])===gn || str(f["Document Name"])===gn);
+    if (apv > 0 && finRow) {
+      const MONTHS = ["October","November","December","January","February","March","April","May","June","July","August","September"];
+      let actual = 0;
+      MONTHS.forEach(m => { actual += num(finRow["Monthly "+m]||0); });
+      finScores.push(Math.min(actual/apv, 1));
+    }
+  });
+  // Tiered scoring — not linear. Underspending below 85% is penalized progressively.
+  // Past FY only. Current FY and no-data cases default to neutral 0.75.
+  const tieredUtil = pct => pct >= 0.85 ? 1.0 : pct >= 0.70 ? 0.80 : pct >= 0.50 ? 0.50 : pct > 0 ? 0.20 : 0.0;
+  const rawFinUtil = finScores.length ? finScores.reduce((a,b)=>a+b,0)/finScores.length : null;
+  const finUtil = rawFinUtil !== null ? tieredUtil(rawFinUtil) : 0.75;
+
+  // 2. Invoice Compliance (15%) — on-time rate across all grants
+  let invSubTotal = 0, invDueTotal = 0;
+  filtered.forEach(r => {
+    const gn = str(r["Grant Number"]);
+    const fy = parseInt(r["Sub Code"]||r["Year"]||0);
+    const gInv = invoices.filter(i => i["Parent Grant Number"]===gn && str(i["Invoice Status"])!=="Invoice In Process");
+    invSubTotal += countInvSub(gInv);
+    invDueTotal += countDueMonths(fy);
+  });
+  const invRate = invDueTotal > 0 ? invSubTotal/invDueTotal : 1;
+
+  // 3. QTR Compliance (15%) — on-time rate across all grants
+  let qtrSubTotal = 0, qtrDueTotal = 0;
+  filtered.forEach(r => {
+    const gn = str(r["Grant Number"]);
+    const fy = parseInt(r["Sub Code"]||r["Year"]||0);
+    const gQTR = qtrs.filter(q => q["Parent Grant Number"]===gn);
+    qtrSubTotal += countQTRSub(gQTR);
+    qtrDueTotal += countDueQTRs(fy);
+  });
+  const qtrRate = qtrDueTotal > 0 ? qtrSubTotal/qtrDueTotal : 1;
+
+  // 4. Program Consistency (10%) — financial utilization variance across FYs
+  let consistScore = 0.5;
+  if (fyList.length >= 2) {
+    const fyUtils = fyList.map(fy => {
+      const fyGrants = orgGrants.filter(r => str(r["Sub Code"]||r["Year"])===fy);
+      const utils = [];
+      fyGrants.forEach(r => {
+        const apv = num(r["Apv Program Total"]||r["Apv Total"]);
+        const finRow = financial.find(f => str(f["Grant Number"])===str(r["Grant Number"])||str(f["Document Name"])===str(r["Grant Number"]));
+        if (apv > 0 && finRow) {
+          const MONTHS = ["October","November","December","January","February","March","April","May","June","July","August","September"];
+          let actual = 0;
+          MONTHS.forEach(m => { actual += num(finRow["Monthly "+m]||0); });
+          utils.push(actual/apv);
+        }
+      });
+      return utils.length ? utils.reduce((a,b)=>a+b,0)/utils.length : null;
+    }).filter(v => v !== null);
+    if (fyUtils.length >= 2) {
+      const avg = fyUtils.reduce((a,b)=>a+b,0)/fyUtils.length;
+      const variance = fyUtils.reduce((a,b) => a + Math.pow(b-avg,2), 0)/fyUtils.length;
+      // Low variance = high consistency. Max variance ~0.25 (0 to 1 range)
+      consistScore = Math.max(0, 1 - (variance / 0.25));
+    }
+  }
+
+  // 5. Grant Completion (20%)
+  // Definition: a grant is complete when all 12 mandatory invoices AND all 5 QTR
+  // reports (QTR1-QTR4 + QTR5/FR) have been submitted.
+  // EXT invoices are excluded — they are optional extension invoices.
+  // Current FY grants are excluded — impossible to be complete yet.
+  // If org has no past FY grants, neutral score 0.75.
+  const pastGrants = orgGrants.filter(r => parseInt(r["Sub Code"]||r["Year"]||0) < currentFY);
+  const totalGrants = orgGrants.length;
+  const completedGrants = pastGrants.filter(r => {
+    const gn = str(r["Grant Number"]);
+    const gInv = invoices.filter(i => i["Parent Grant Number"] === gn);
+    const gQtr = qtrs.filter(q => q["Parent Grant Number"] === gn);
+    // Count mandatory invoices (Oct-Sep, exclude EXT)
+    const MONTHS = ["Oct","Nov","Dec","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep"];
+    const invCount = MONTHS.filter(m => gInv.some(i => {
+      const p = str(i["Invoice Number"]).split("-");
+      return p.length >= 3 && p[2] === m && str(i["Invoice Status"]) !== "Invoice In Process";
+    })).length;
+    // Count QTR reports (QTR1-QTR5)
+    const QTRS = ["QTR1","QTR2","QTR3","QTR4","QTR5"];
+    const qtrCount = QTRS.filter(q => gQtr.some(r => {
+      const p = str(r["QTR Number"]).split("-");
+      return p.length >= 2 && p[1] === q;
+    })).length;
+    return invCount >= 12 && qtrCount >= 5;
+  }).length;
+  const completionRate = pastGrants.length > 0 ? completedGrants/pastGrants.length : 0.75;
+
+  // 6. SHSO Score (15%) — manual 1-10 from localStorage
+  const lsKey = "shso_score_" + orgName.replace(/\s+/g,"_");
+  const shsoRaw = parseFloat(localStorage.getItem(lsKey) || "0");
+  const shsoNorm = shsoRaw > 0 ? shsoRaw/10 : null; // null = not yet entered
+
+  // Composite score — if SHSO not entered, redistribute its 15% to other dims proportionally
+  let composite;
+  if (shsoNorm === null) {
+    // Redistribute 15% across other 5 dims proportionally (25+15+15+10+20 = 85 base)
+    composite = (finUtil*0.2941 + invRate*0.1765 + qtrRate*0.1765 + consistScore*0.1176 + completionRate*0.2353) * 100;
+  } else {
+    composite = (finUtil*0.25 + invRate*0.15 + qtrRate*0.15 + consistScore*0.10 + completionRate*0.20 + shsoNorm*0.15) * 100;
+  }
+  composite = Math.round(composite);
+
+  // Tier
+  const tier = composite >= 85 ? {label:"⭐ TIER 1 — Preferred Partner",   cls:"signal-0"}
+             : composite >= 70 ? {label:"✅ TIER 2 — Meets Expectations",    cls:"signal-1"}
+             : composite >= 55 ? {label:"⚠️ TIER 3 — Monitor Closely",       cls:"signal-2"}
+             :                   {label:"🚩 TIER 4 — At Risk",                cls:"signal-4"};
+
+  // Score bar helper
+  const scorebar = (pct, label, weight, colorClass) => {
+    const w = Math.round(pct*100);
+    const contrib = Math.round(pct * weight * 100);
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-family:'Lexend',sans-serif;font-size:11px;font-weight:600;color:var(--text-secondary)">${label}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted)">${w}% · +${contrib}pts</span>
+      </div>
+      <div style="height:8px;background:var(--surface3);border-radius:4px;overflow:hidden">
+        <div style="height:100%;width:${w}%;border-radius:4px;background:${colorClass}"></div>
+      </div>
+    </div>`;
+  };
+
+  const dv = document.getElementById("view-detail");
+  dv.innerHTML = `
+  <div class="detail">
+
+    <!-- HERO -->
+    <div class="hero-card">
+      <div>
+        <div class="hero-eyebrow">Grantee Intelligence Profile</div>
+        <div class="hero-title">${esc(orgName)}</div>
+        <div class="hero-meta" style="margin-top:8px">
+          <span class="badge badge-year">${orgGrants.length} Total Grants</span>
+          <span class="badge badge-year">${fyList.length} Fiscal Year(s)</span>
+          <span class="badge badge-year">${completedGrants} Completed</span>
+          ${[...new Set(orgGrants.map(r=>str(r["Grant Type"])).filter(Boolean))].map(t=>`<span class="badge badge-${t}">${t}</span>`).join("")}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px">
+        <div style="text-align:center">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:52px;font-weight:700;color:var(--accent);line-height:1">${composite}</div>
+          <div style="font-family:'Lexend',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted)">Grantee Score</div>
+        </div>
+        <span class="signal ${tier.cls}" style="font-size:11px">${tier.label}</span>
+      </div>
+    </div>
+
+    <!-- FY FILTER -->
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span style="font-family:'Lexend',sans-serif;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em">View:</span>
+      <button onclick="renderGI('${esc(orgName)}',orgGrantsCache,'${fyList.join(",")}','')" 
+        style="padding:5px 12px;border-radius:20px;border:1px solid ${!fyFilter?'var(--accent)':'var(--border)'};background:${!fyFilter?'var(--accent)':'white'};color:${!fyFilter?'white':'var(--text-secondary)'};font-size:12px;cursor:pointer;font-family:'Lexend',sans-serif;font-weight:600">
+        All Years
+      </button>
+      ${fyList.map(fy=>`<button onclick="renderGI('${esc(orgName)}',orgGrantsCache,'${fyList.join(",")}','${fy}')"
+        style="padding:5px 12px;border-radius:20px;border:1px solid ${fyFilter===fy?'var(--accent)':'var(--border)'};background:${fyFilter===fy?'var(--accent)':'white'};color:${fyFilter===fy?'white':'var(--text-secondary)'};font-size:12px;cursor:pointer;font-family:'Lexend',sans-serif;font-weight:600">
+        FY${fy}
+      </button>`).join("")}
+    </div>
+
+    <!-- SCORE BREAKDOWN + SHSO INPUT -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+
+      <!-- Score Breakdown -->
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Score Breakdown</div><div class="panel-sub">How the score is calculated</div></div>
+        <div style="padding:16px 18px">
+          ${scorebar(finUtil,    "Financial Utilization (25%)",   0.25, "var(--accent)")}
+          ${scorebar(invRate,    "Invoice Compliance (15%)",      0.15, "var(--green)")}
+          ${scorebar(qtrRate,    "QTR Compliance (15%)",          0.15, "var(--green)")}
+          ${scorebar(consistScore,"Program Consistency (10%)",    0.10, "#7C3AED")}
+          ${scorebar(completionRate,"Grant Completion (20%)",     0.20, "var(--amber)")}
+          ${shsoNorm !== null ? scorebar(shsoNorm, "SHSO Score (15%)", 0.15, "var(--accent-hover)") : `
+          <div style="padding:10px;background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:var(--radius);font-size:12px;color:var(--amber)">
+            ⚠️ SHSO Score not entered — weight redistributed automatically
+          </div>`}
+        </div>
+      </div>
+
+      <!-- SHSO Manual Score -->
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">SHSO Score</div><div class="panel-sub">Staff judgment · 15% weight · Saved locally</div></div>
+        <div style="padding:20px 18px;display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:13px;color:var(--text-secondary);line-height:1.6">
+            Rate this organization based on qualitative factors: quality of reports, responsiveness, relationship history, and overall program management.
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <input type="number" id="shso-input" min="1" max="10" step="0.5"
+              value="${shsoRaw > 0 ? shsoRaw : ""}"
+              placeholder="1–10"
+              style="width:80px;padding:10px 12px;border:2px solid var(--border);border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:var(--accent);text-align:center;outline:none"
+              onfocus="this.style.borderColor='var(--accent)'"
+              onblur="this.style.borderColor='var(--border)'"
+            />
+            <div style="font-size:12px;color:var(--text-muted)">out of 10</div>
+            <button onclick="saveSHSOScore('${esc(orgName)}','${fyList.join(",")}',${!!fyFilter},'${fyFilter}')"
+              class="btn btn-primary" style="margin-left:auto">
+              Save Score
+            </button>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button onclick="document.getElementById('shso-input').value=${n}"
+              style="width:36px;height:36px;border-radius:var(--radius);border:1px solid ${shsoRaw===n?'var(--accent)':'var(--border)'};background:${shsoRaw===n?'var(--accent)':'white'};color:${shsoRaw===n?'white':'var(--text-secondary)'};font-size:13px;font-weight:600;cursor:pointer;font-family:'JetBrains Mono',monospace">${n}</button>`).join("")}
+          </div>
+          <div id="shso-saved-msg" style="font-size:12px;color:var(--green);display:none">✅ Score saved</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- KEY METRICS ROW -->
+    <div class="section-head">Performance Summary</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;background:var(--surface);box-shadow:var(--shadow)">
+      ${metricCell("Avg Budget Utilized", (finUtil*100).toFixed(1)+"%", finUtil>=0.92?"pct-good":finUtil>=0.5?"pct-warn":"pct-risk")}
+      ${metricCell("Invoice On-Time Rate", (invRate*100).toFixed(1)+"%", invRate>=0.9?"pct-good":invRate>=0.7?"pct-warn":"pct-risk")}
+      ${metricCell("QTR On-Time Rate", (qtrRate*100).toFixed(1)+"%", qtrRate>=0.9?"pct-good":qtrRate>=0.7?"pct-warn":"pct-risk")}
+      ${metricCell("Grant Completion", completedGrants+"/"+totalGrants, completionRate>=0.9?"pct-good":completionRate>=0.6?"pct-warn":"pct-risk", true)}
+    </div>
+
+    <!-- GRANT TABLE -->
+    <div class="section-head">Grant History</div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">All Grants — ${esc(orgName)}</div>
+        <div class="panel-sub">${filtered.length} grant(s) shown</div>
+      </div>
+      <table class="status-table" style="font-size:12.5px">
+        <thead><tr>
+          <th class="left">Grant Number</th>
+          <th>Type</th>
+          <th>FY</th>
+          <th class="left">Project Title</th>
+          <th>Status</th>
+          <th>Budget Used</th>
+          <th>Signal</th>
+          <th>Links</th>
+        </tr></thead>
+        <tbody>
+          ${filtered.map(r => {
+            const gn  = str(r["Grant Number"]);
+            const fy  = parseInt(r["Sub Code"]||r["Year"]||0);
+            const sig = calcSignal(gn, fy);
+            const apv = num(r["Apv Program Total"]||r["Apv Total"]);
+            const finRow = financial.find(f => str(f["Grant Number"])===gn||str(f["Document Name"])===gn);
+            let pctUsed = null;
+            if (apv > 0 && finRow) {
+              const MONTHS = ["October","November","December","January","February","March","April","May","June","July","August","September"];
+              let actual = 0;
+              MONTHS.forEach(m => { actual += num(finRow["Monthly "+m]||0); });
+              pctUsed = actual/apv;
+            }
+            return `<tr onclick="showDetail('${esc(gn)}')" style="cursor:pointer">
+              <td class="left"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:500">${esc(gn)}</span></td>
+              <td><span class="badge badge-${esc(str(r["Grant Type"]))}">${esc(str(r["Grant Type"])||"—")}</span></td>
+              <td><span class="badge badge-year">FY${fy}</span></td>
+              <td class="left" style="color:var(--text-secondary);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(str(r["Project Title"])||"—")}</td>
+              <td style="font-size:11px;color:var(--text-muted)">${esc(str(r["Status"])||"—")}</td>
+              <td style="text-align:center">
+                ${pctUsed !== null
+                  ? `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:${pctUsed>=0.92?'var(--green)':pctUsed>=0.5?'var(--amber)':'var(--red)'};font-weight:600">${(pctUsed*100).toFixed(1)}%</span>`
+                  : `<span class="status-null">—</span>`}
+              </td>
+              <td><span class="signal signal-${sig.level}" style="font-size:10px">${sig.label}</span></td>
+              <td>
+                <div class="link-row">
+                  ${lbtn(r["Landing Page URL"],    "🏠","Landing Page")}
+                  ${lbtn(r["Grant Agreement URL"], "📄","Agreement")}
+                </div>
+              </td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>
+
+  </div>`;
+
+  // Cache org grants for FY toggle buttons
+  window.orgGrantsCache = orgGrants;
+}
+
+function metricCell(label, value, pctClass, last) {
+  return `<div class="fin-cell" ${last?"style='border-right:none'":""}>
+    <div class="fin-label">${label}</div>
+    <div class="fin-amount" style="font-size:26px">${value}</div>
+    <span class="fin-pct ${pctClass}" style="margin-top:6px">${pctClass==="pct-good"?"✅ Strong":pctClass==="pct-warn"?"⚠️ Watch":"🚩 At Risk"}</span>
+  </div>`;
+}
+
+function saveSHSOScore(orgName, fyListStr, hasFyFilter, fyFilter) {
+  const val = parseFloat(document.getElementById("shso-input").value);
+  if (isNaN(val) || val < 1 || val > 10) {
+    alert("Please enter a number between 1 and 10");
+    return;
+  }
+  const lsKey = "shso_score_" + orgName.replace(/\s+/g,"_");
+  localStorage.setItem(lsKey, val);
+  const msg = document.getElementById("shso-saved-msg");
+  msg.style.display = "block";
+  setTimeout(() => msg.style.display="none", 2000);
+  // Re-render to update score
+  const fyList = fyListStr.split(",");
+  const orgGrants = grants.filter(r => str(r["Organization"]) === orgName);
+  renderGI(orgName, orgGrants, fyList, fyFilter);
+}
+
+
+// ─────────────────────────────────────────────────────
+// SUPERVISOR REPORT PANEL (DRE + EE only)
+// Joins via: supervisors[Document Name] = Invoice Number
+// One row per invoice (monthly). Collapsed by default.
+// ─────────────────────────────────────────────────────
+function supervisorPanel(grantNumber, grantType) {
+  const type = str(grantType).toUpperCase();
+  if (type !== "DRE" && type !== "EE") return "";
+
+  // Find all supervisor rows for this grant by matching Document Name to invoice numbers
+  const grantInvNums = invoices
+    .filter(i => i["Parent Grant Number"] === grantNumber)
+    .map(i => str(i["Invoice Number"]));
+
+  const rows = supervisors.filter(r => grantInvNums.includes(str(r["Document Name"])));
+  if (!rows.length) return "";
+
+  // Month order — mandatory 12 months + EXT
+  const MONTH_ORDER = ["Oct","Nov","Dec","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Ext"];
+  const MANDATORY_MONTHS = ["Oct","Nov","Dec","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep"];
+
+  // Extract month from Document Name (Invoice Number) position {2}
+  const getMonth = doc => {
+    const p = str(doc).split("-");
+    return p.length >= 3 ? p[2] : "";
+  };
+
+  // ── AGGREGATE rows by month — sum all numeric columns per month ──────────
+  // This fixes the OCT OCT OCT issue when multiple supervisor reports exist
+  // for the same month (e.g. multiple grants at same org, or amended reports)
+  const ALL_COLS = [
+    "Hours Patrolled","Vehicles Stopped","Warnings","Total Mileage","Total Hours",
+    "Child Passenger Violations","Safety Belt Violations","Speeding Violations",
+    "Portable Electronic Device Violations","OSC Violations","Other Traffic Violations",
+    "Excessive Speed Arrests","DLS Arrests","Other Arrests","Processing Hours for Above",
+    "Number of Checkpoints","Hours at Checkpoint",
+    "DUI Arrests Patrol (Alcohol)","DUI Arrests Patrol (Drugs)","DUI Arrests Patrol (Drugs & Alochol)",
+    "DUI Arrests - CP (Alcohol)","DUI Arrests - CP (Drugs)","DUI Arrests - CP (Drugs & Alcohol)",
+    "Hand Held Tests","Evidentiary Tests",".02 Violations","DUI Processing Hours",
+    "DRE Evaluations","Saliva Roadside Swab Testing","DRE Processing Hours",
+    "Briefing/Scheduling/Paperwork","Travel Time","Hours at Assists and Crashes",
+    "Court Hours","Other Hours","Salaries Cost"
+  ];
+
+  // Build month-aggregated map
+  const monthMap = {};
+  rows.forEach(r => {
+    const m = getMonth(r["Document Name"]);
+    if (!m) return;
+    if (!monthMap[m]) { monthMap[m] = {}; ALL_COLS.forEach(c => monthMap[m][c] = 0); }
+    ALL_COLS.forEach(c => { monthMap[m][c] += parseFloat(r[c])||0; });
+  });
+
+  // Active months in order (only months with data)
+  const activeMonths = MONTH_ORDER.filter(m => monthMap[m]);
+  // Use aggregated rows for display — one entry per month
+  const aggRows = activeMonths.map(m => ({ ...monthMap[m], _month: m }));
+
+  // Sum across all months
+  const total = col => aggRows.reduce((a,r) => a + (r[col]||0), 0);
+
+  // EE-specific: only show these groups (no DRE-specific content)
+  // DRE-specific: different hero KPIs and includes dreGroup
+  const isDRE = type === "DRE";
+
+  // ── METRIC GROUPS ─────────────────────────────────────────────────────────
+  // EE focus metrics — exactly as specified
+  const patrolGroup = [
+    ["Hours Patrolled",          "Hours Patrolled"],
+    ["Vehicles Stopped",         "Vehicles Stopped"],
+    ["Warnings",                 "Warnings"],
+    ["Total Mileage",            "Total Mileage"],
+    ["Total Hours",              "Total Hours"],
+  ];
+
+  const violationsGroup = [
+    ["Child Passenger",          "Child Passenger Violations"],
+    ["Safety Belt",              "Safety Belt Violations"],
+    ["Speeding",                 "Speeding Violations"],
+    ["Electronic Device",        "Portable Electronic Device Violations"],
+    ["OSC Violations",           "OSC Violations"],
+    ["Other Traffic",            "Other Traffic Violations"],
+  ];
+
+  const arrestsGroup = [
+    ["Excessive Speed",          "Excessive Speed Arrests"],
+    ["DLS (License Suspended)",  "DLS Arrests"],
+    ["Other Arrests",            "Other Arrests"],
+  ];
+
+  const duiPatrolGroup = [
+    ["DUI Patrol — Alcohol",     "DUI Arrests Patrol (Alcohol)"],
+    ["DUI Patrol — Drugs",       "DUI Arrests Patrol (Drugs)"],
+    ["DUI Patrol — Drugs & Alc", "DUI Arrests Patrol (Drugs & Alochol)"],
+  ];
+
+  const checkpointGroup = [
+    ["Checkpoints",              "Number of Checkpoints"],
+    ["Hours at Checkpoint",      "Hours at Checkpoint"],
+    ["CP DUI — Alcohol",         "DUI Arrests - CP (Alcohol)"],
+    ["CP DUI — Drugs",           "DUI Arrests - CP (Drugs)"],
+    ["CP DUI — Drugs & Alc",     "DUI Arrests - CP (Drugs & Alcohol)"],
+  ];
+
+  // DRE-specific group — only rendered for DRE grants
+  const dreGroup = [
+    ["DRE Evaluations",          "DRE Evaluations"],
+    ["Saliva Swab Testing",      "Saliva Roadside Swab Testing"],
+    ["Hand Held Tests",          "Hand Held Tests"],
+    ["Evidentiary Tests",        "Evidentiary Tests"],
+    [".02 Violations",           ".02 Violations"],
+  ];
+
+  // Hours breakdown — DRE-specific columns only shown for DRE
+  const hoursGroup = isDRE ? [
+    ["DRE Processing",           "DRE Processing Hours"],
+    ["DUI Processing",           "DUI Processing Hours"],
+    ["Briefing/Paperwork",       "Briefing/Scheduling/Paperwork"],
+    ["Travel Time",              "Travel Time"],
+    ["Assists & Crashes",        "Hours at Assists and Crashes"],
+    ["Court Hours",              "Court Hours"],
+    ["Other Hours",              "Other Hours"],
+  ] : [
+    ["Processing Hours",         "Processing Hours for Above"],
+    ["DUI Processing",           "DUI Processing Hours"],
+    ["Briefing/Paperwork",       "Briefing/Scheduling/Paperwork"],
+    ["Travel Time",              "Travel Time"],
+    ["Assists & Crashes",        "Hours at Assists and Crashes"],
+    ["Court Hours",              "Court Hours"],
+    ["Other Hours",              "Other Hours"],
+  ];
+
+  const hasCheckpoints = total("Number of Checkpoints") > 0 || total("Hours at Checkpoint") > 0;
+
+  // Hero KPIs — differ by program type
+  const hoursP      = total("Hours Patrolled");
+  const vehs        = total("Vehicles Stopped");
+  const totalDUI    = total("DUI Arrests Patrol (Alcohol)") + total("DUI Arrests Patrol (Drugs)") + total("DUI Arrests Patrol (Drugs & Alochol)") +
+                      total("DUI Arrests - CP (Alcohol)") + total("DUI Arrests - CP (Drugs)") + total("DUI Arrests - CP (Drugs & Alcohol)");
+  const totalArrests = total("Excessive Speed Arrests") + total("DLS Arrests") + total("Other Arrests") + totalDUI;
+  const eeRatio     = hoursP > 0 ? (totalArrests / hoursP).toFixed(2) : "—";
+  // DRE-specific: program hours = DRE Processing + Briefing + Travel + Other
+  const dreEvals    = total("DRE Evaluations");
+  const dreProcess  = total("DRE Processing Hours");
+  const dreBriefing = total("Briefing/Scheduling/Paperwork");
+  const dreTravel   = total("Travel Time");
+  const dreOther    = total("Other Hours");
+  const dreProgHrs  = dreProcess + dreBriefing + dreTravel + dreOther;
+
+  // SVG sparkline — uses aggregated monthly data
+  const sparkline = col => {
+    const vals = aggRows.map(r => r[col]||0);
+    if (vals.every(v=>v===0)) return '<span style="color:var(--text-faint);font-size:10px">—</span>';
+    const max = Math.max(...vals, 1);
+    const w = 60, h = 20;
+    const pts = vals.map((v,i) => `${Math.round(i*(w/(vals.length-1||1)))},${Math.round(h - (v/max)*(h-2))}`).join(" ");
+    return `<svg width="${w}" height="${h}" style="display:inline-block;vertical-align:middle"><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  };
+
+  // Month column headers — one per aggregated month
+  const mhdrs = activeMonths.map(m => `<th style="padding:6px 8px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);border-bottom:1px solid var(--border);white-space:nowrap">${m}</th>`).join("");
+  const colHeaders = `<thead><tr>
+    <th style="padding:6px 10px;text-align:left;font-family:'Lexend',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border)">Metric</th>
+    ${mhdrs}
+    <th style="padding:6px 8px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);border-bottom:1px solid var(--border);background:var(--surface2)">YTD</th>
+    <th style="padding:6px 8px;text-align:center;font-family:'Lexend',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border)">Trend</th>
+  </tr></thead>`;
+
+  // Build a metric row — uses aggregated month data (one column per month)
+  const mrow = (label, col) => {
+    const tot = total(col);
+    if (tot === 0) return "";
+    const cells = aggRows.map(r => {
+      const v = r[col]||0;
+      return `<td style="padding:6px 8px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:11px;color:${v>0?'var(--text)':'var(--text-faint)'}">${v>0?v.toLocaleString():"—"}</td>`;
+    }).join("");
+    return `<tr style="border-bottom:1px solid var(--surface2)">
+      <td style="padding:6px 10px;font-size:12.5px;color:var(--text-secondary);font-weight:500;white-space:nowrap">${label}</td>
+      ${cells}
+      <td style="padding:6px 8px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--accent);background:var(--surface2)">${tot>0?tot.toLocaleString():"—"}</td>
+      <td style="padding:6px 8px;text-align:center">${sparkline(col)}</td>
+    </tr>`;
+  };
+
+  // Section block
+  const section = (title, group) => {
+    const rowsHtml = group.map(([label,col]) => mrow(label,col)).join("");
+    if (!rowsHtml.trim()) return "";
+    return `
+      <tr><td colspan="${aggRows.length+3}" style="padding:8px 10px 4px;background:var(--surface2);font-family:'Lexend',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted)">${title}</td></tr>
+      ${rowsHtml}`;
+  };
+
+  const uid = "sup_" + grantNumber.replace(/[^a-z0-9]/gi,"_");
+
+  return `
+    <div class="section-head">Enforcement Activity <span style="font-size:10px;color:var(--text-faint);font-weight:400;text-transform:none;letter-spacing:0">${type} · ${rows.length} monthly report(s)</span></div>
+    <div class="panel">
+      <div class="panel-head" style="cursor:pointer" onclick="document.getElementById('${uid}').style.display=document.getElementById('${uid}').style.display==='none'?'block':'none';this.querySelector('.sup-toggle').textContent=document.getElementById('${uid}').style.display==='none'?'▶ Show breakdown':'▼ Hide breakdown'">
+        <div class="panel-title">Supervisor Report Summary</div>
+        <div class="panel-sub"><span class="sup-toggle">▶ Show breakdown</span></div>
+      </div>
+
+      <!-- HERO KPIS — always visible, different layout for DRE vs EE -->
+      ${isDRE ? `
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid var(--border)">
+        <div class="fin-cell"><div class="fin-label">DRE Evaluations</div><div class="fin-amount" style="font-size:24px;color:var(--accent)">${dreEvals.toLocaleString()}</div><div class="fin-sub">Primary output YTD</div></div>
+        <div class="fin-cell"><div class="fin-label">Program Hours</div><div class="fin-amount" style="font-size:24px">${dreProgHrs.toLocaleString()}</div><div class="fin-sub">Process + Brief + Travel + Other</div></div>
+        <div class="fin-cell"><div class="fin-label">DRE Processing Hours</div><div class="fin-amount" style="font-size:24px">${dreProcess.toLocaleString()}</div><div class="fin-sub">YTD total</div></div>
+        <div class="fin-cell"><div class="fin-label">Total Mileage</div><div class="fin-amount" style="font-size:24px">${total("Total Mileage").toLocaleString()}</div><div class="fin-sub">YTD total</div></div>
+        <div class="fin-cell" style="border-right:none">
+          <div class="fin-label">Program Hours Breakdown</div>
+          <div style="display:flex;flex-direction:column;gap:2px;margin-top:4px">
+            <div style="font-size:11px;color:var(--text-secondary)">Processing: <span style="font-family:'JetBrains Mono',monospace;color:var(--text)">${dreProcess.toLocaleString()}</span></div>
+            <div style="font-size:11px;color:var(--text-secondary)">Briefing: <span style="font-family:'JetBrains Mono',monospace;color:var(--text)">${dreBriefing.toLocaleString()}</span></div>
+            <div style="font-size:11px;color:var(--text-secondary)">Travel: <span style="font-family:'JetBrains Mono',monospace;color:var(--text)">${dreTravel.toLocaleString()}</span></div>
+            <div style="font-size:11px;color:var(--text-secondary)">Other: <span style="font-family:'JetBrains Mono',monospace;color:var(--text)">${dreOther.toLocaleString()}</span></div>
+          </div>
+        </div>
+      </div>` : `
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid var(--border)">
+        <div class="fin-cell"><div class="fin-label">Hours Patrolled</div><div class="fin-amount" style="font-size:24px">${hoursP.toLocaleString()}</div><div class="fin-sub">YTD total</div></div>
+        <div class="fin-cell"><div class="fin-label">Vehicles Stopped</div><div class="fin-amount" style="font-size:24px">${vehs.toLocaleString()}</div><div class="fin-sub">YTD total</div></div>
+        <div class="fin-cell"><div class="fin-label">Total DUI Arrests</div><div class="fin-amount" style="font-size:24px;color:var(--red)">${totalDUI.toLocaleString()}</div><div class="fin-sub">Patrol + Checkpoint</div></div>
+        <div class="fin-cell"><div class="fin-label">Total Arrests</div><div class="fin-amount" style="font-size:24px">${totalArrests.toLocaleString()}</div><div class="fin-sub">All types YTD</div></div>
+        <div class="fin-cell" style="border-right:none"><div class="fin-label">Arrests / Hour</div><div class="fin-amount" style="font-size:24px;color:var(--accent)">${eeRatio}</div><div class="fin-sub">Efficiency ratio</div></div>
+      </div>`}
+
+      <!-- MONTHLY DETAIL — collapsed -->
+      <div id="${uid}" style="display:none;overflow-x:auto">
+        <table style="border-collapse:collapse;width:100%;min-width:600px;font-size:12px">
+          ${colHeaders}
+          <tbody>
+            ${section("Patrol Activity",     patrolGroup)}
+            ${section("Traffic Violations",  violationsGroup)}
+            ${section("Arrests",             arrestsGroup)}
+            ${section("DUI — Patrol",        duiPatrolGroup)}
+            ${hasCheckpoints ? section("Checkpoints", checkpointGroup) : ""}
+            ${isDRE ? section("DRE Specific", dreGroup) : ""}
+            ${section("Hours Breakdown",     hoursGroup)}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+</script>
+</body>
+</html>
