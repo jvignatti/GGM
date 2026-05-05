@@ -6,6 +6,7 @@
 <title>SHSO Grant Directory</title>
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 /* ── DESIGN SYSTEM — Government/Public Service─────────────
    Colors: Government palette #0F172A + #0369A1 + #F8FAFC
@@ -53,6 +54,57 @@
   --table-row:      36px;
   --header-height:  56px;
 }
+
+/* ── DARK MODE ─────────────────────────────────────────── */
+[data-theme="dark"] {
+  --primary:        #1E293B;
+  --primary-fg:     #F1F5F9;
+  --secondary:      #334155;
+  --secondary-fg:   #E2E8F0;
+  --accent:         #38BDF8;
+  --accent-fg:      #0F172A;
+  --accent-light:   #0C4A6E;
+  --accent-hover:   #7DD3FC;
+  --bg:             #0F172A;
+  --surface:        #1E293B;
+  --surface2:       #263348;
+  --surface3:       #2D3E56;
+  --border:         #334155;
+  --border-strong:  #475569;
+  --text:           #F1F5F9;
+  --text-secondary: #CBD5E1;
+  --text-muted:     #94A3B8;
+  --text-faint:     #64748B;
+  --green:          #4ADE80;
+  --green-bg:       #14532D;
+  --green-border:   #166534;
+  --amber:          #FCD34D;
+  --amber-bg:       #78350F;
+  --amber-border:   #92400E;
+  --orange:         #FB923C;
+  --orange-bg:      #7C2D12;
+  --red:            #F87171;
+  --red-bg:         #7F1D1D;
+  --red-border:     #991B1B;
+  --shadow-sm:      0 1px 2px rgba(0,0,0,0.3);
+  --shadow:         0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md:      0 4px 6px rgba(0,0,0,0.4);
+  --shadow-lg:      0 10px 15px rgba(0,0,0,0.4);
+}
+
+/* Dark mode toggle button */
+#dark-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 8px;
+  line-height: 1;
+  transition: border-color 0.15s, color 0.15s;
+}
+#dark-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
@@ -153,6 +205,13 @@ h1,h2,h3,h4,h5 { font-family: 'Lexend', sans-serif; }
 .breadcrumb a:hover { color: var(--accent-hover); text-decoration: underline; }
 .breadcrumb-sep { color: var(--border-strong); }
 .breadcrumb-current { color: var(--text-secondary); font-weight: 500; }
+.grant-nav { display:flex; align-items:center; gap:6px; margin-left:auto; }
+.grant-nav-btn { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:4px 10px; font-size:12px; font-weight:500; color:var(--text-secondary); cursor:pointer; transition:all 0.15s; }
+.grant-nav-btn:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); }
+.grant-nav-btn:disabled { opacity:0.35; cursor:default; }
+.grant-nav-info { font-size:11px; color:var(--text-faint); font-family:'JetBrains Mono',monospace; }
+.print-btn { background:none; border:1px solid var(--border); border-radius:var(--radius); color:var(--text-secondary); cursor:pointer; font-size:12px; padding:5px 12px; font-weight:500; transition:all 0.15s; }
+.print-btn:hover { border-color:var(--accent); color:var(--accent); }
 
 /* ─── TOOLBAR ───────────────────────────── */
 .toolbar {
@@ -178,7 +237,7 @@ h1,h2,h3,h4,h5 { font-family: 'Lexend', sans-serif; }
   outline: none;
   transition: all 0.15s;
 }
-.search-input:focus { border-color: var(--accent); background: white; box-shadow: 0 0 0 3px rgba(3,105,161,0.1); }
+.search-input:focus { border-color: var(--accent); background: var(--surface); color: var(--text); box-shadow: 0 0 0 3px rgba(3,105,161,0.15); }
 .search-input::placeholder { color: var(--text-faint); }
 .filter-group { display: flex; align-items: center; gap: 6px; }
 .filter-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
@@ -280,6 +339,9 @@ td { padding: 8px 14px; vertical-align: middle; }
 .badge-EDUC { background: #FEF3C7; color: #B45309; border-color: #FCD34D; }
 .badge-TRCC { background: #F3E8FF; color: #7C3AED; border-color: #DDD6FE; }
 .badge-year { background: var(--surface2); color: var(--text-muted); border-color: var(--border); font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 400; border-radius: 4px; }
+.badge-legacy { background: #F1F5F9; color: #64748B; border-color: #CBD5E1; font-size: 10px; letter-spacing: 0.04em; }
+.badge-amendment { background: #FEF9C3; color: #854D0E; border-color: #FDE047; font-size: 10px; letter-spacing: 0.04em; }
+.badge-supplemental { background: #EDE9FE; color: #6D28D9; border-color: #C4B5FD; font-size: 10px; letter-spacing: 0.04em; }
 
 /* ─── SIGNAL BADGES ─────────────────────── */
 .signal {
@@ -622,6 +684,7 @@ td { padding: 8px 14px; vertical-align: middle; }
   <div class="header-stats">
     <div class="stat-chip"><span class="stat-chip-num" id="stat-grants">—</span><span class="stat-chip-label">Grants</span></div>
     <div class="stat-chip"><span class="stat-chip-num" id="stat-fy">—</span><span class="stat-chip-label">FYs</span></div>
+    <button id="legacy-toggle" title="Toggle Legacy Grants in signal calculation" style="background:none;border:1px solid rgba(255,255,255,0.3);border-radius:var(--radius);color:rgba(255,255,255,0.8);cursor:pointer;font-size:11px;padding:4px 10px;font-weight:500;transition:all 0.15s">📦 Legacy: ON</button>
     <div class="header-meta" id="hdr-meta">Loading...</div>
   </div>
 </header>
@@ -631,39 +694,48 @@ td { padding: 8px 14px; vertical-align: middle; }
   <a onclick="goList()">Grant Directory</a>
   <span class="breadcrumb-sep">›</span>
   <span class="breadcrumb-current" id="bc-text"></span>
+  <div class="grant-nav" id="grant-nav" style="display:none">
+    <button class="grant-nav-btn" id="nav-prev" onclick="navGrant(-1)" disabled>← Prev</button>
+    <span class="grant-nav-info" id="nav-info"></span>
+    <button class="grant-nav-btn" id="nav-next" onclick="navGrant(1)" disabled>Next →</button>
+  </div>
 </div>
 
 <!-- APP -->
 <div id="app">
 
   <!-- Loading -->
-  <div class="state" id="st-load">
+  <div class="state" id="st-load" style="display:none">
     <div class="loader"></div>
     <div class="state-title">Loading grant data...</div>
-    <div class="state-sub">Fetching files from SharePoint</div>
+    <div class="state-sub">Reading file…</div>
   </div>
 
   <!-- Upload -->
-  <div class="upload-area" id="st-upload" style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:60px 28px;gap:20px">
-    <div style="text-align:center;max-width:520px">
-      <div style="font-size:36px;margin-bottom:12px;opacity:0.4">🔗</div>
-      <div style="font-family:'Lexend',sans-serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px">Paste your data link</div>
-      <div style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:20px">Paste the SharePoint link to <strong>grants_data.json</strong>.<br>You will be prompted to sign in with your M365 account.</div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input type="text" id="json-url" placeholder="Paste your internal SharePoint link to grants_data.json"
-          style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius);font-family:'Source Sans 3',sans-serif;font-size:13px;color:var(--text);background:var(--bg);outline:none;transition:border-color 0.15s"
-          onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
-        />
-        <button class="btn btn-primary" onclick="loadFromURL()">Load</button>
+  <div class="upload-area" id="st-upload" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 28px;gap:20px">
+    <div style="text-align:center;max-width:480px">
+      <div style="font-size:48px;margin-bottom:16px;opacity:0.35">📂</div>
+      <div style="font-family:'Lexend',sans-serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:8px">Load Grant Data</div>
+      <div style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:28px">Drop your <strong>grants_data.json</strong> file here, or click to browse.</div>
+
+      <!-- Drop zone -->
+      <div id="drop-zone"
+        style="border:2px dashed var(--border-strong);border-radius:var(--radius-lg);padding:36px 28px;cursor:pointer;transition:all 0.2s;margin-bottom:16px;background:var(--surface2)"
+        onclick="document.getElementById('f-json').click()"
+        ondragover="event.preventDefault();this.style.borderColor='var(--accent)';this.style.background='var(--accent-light)'"
+        ondragleave="this.style.borderColor='var(--border-strong)';this.style.background='var(--surface2)'"
+        ondrop="event.preventDefault();this.style.borderColor='var(--border-strong)';this.style.background='var(--surface2)';loadFromFile(event.dataTransfer.files[0])"
+      >
+        <div style="font-size:13px;color:var(--text-muted)">Drag & drop <strong>grants_data.json</strong> here</div>
+        <div style="font-size:11px;color:var(--text-faint);margin-top:6px">or click to browse</div>
       </div>
-      <div id="url-status" style="margin-top:10px;font-size:12px;color:var(--text-muted);min-height:18px"></div>
-      <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
-        <div style="font-size:11px;color:var(--text-faint);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.06em;font-family:'Lexend',sans-serif;font-weight:600">Or load a local file</div>
-        <label style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:12.5px;font-weight:500;color:var(--text-secondary);background:var(--surface);transition:all 0.15s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--surface)'">
-          <input type="file" id="f-json" accept=".json" style="display:none" onchange="loadFromFile(this.files[0])" />
-          📂 Choose grants_data.json
-        </label>
-      </div>
+
+      <label style="display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;color:var(--text-secondary);background:var(--surface);transition:all 0.15s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--surface)'">
+        <input type="file" id="f-json" accept=".json" style="display:none" />
+        📂 Browse for file
+      </label>
+
+      <div id="url-status" style="margin-top:14px;font-size:12px;color:var(--red);min-height:18px"></div>
     </div>
   </div>
 
@@ -697,13 +769,30 @@ td { padding: 8px 14px; vertical-align: middle; }
           <option value="5">SIGNAL 5</option>
         </select>
       </div>
+      <div class="filter-group">
+        <span class="filter-label">System</span>
+        <select class="filter-select" id="f-legacy">
+          <option value="">All</option>
+          <option value="new">New GEARS</option>
+          <option value="legacy">Legacy</option>
+        </select>
+      </div>
       <div class="toolbar-right">
         <button class="btn btn-ghost" id="btn-reset">Reset filters</button>
+        <button id="dark-toggle" title="Toggle dark mode">🌙</button>
       </div>
     </div>
     <div class="results-bar">
       <span id="res-info"></span>
-      <span style="color:var(--text-faint)">Click row for details</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:12px;color:var(--text-muted)">Show</span>
+        <select id="per-page" class="filter-select" style="width:80px;padding:3px 6px;font-size:12px;">
+          <option value="50">50</option>
+          <option value="100" selected>100</option>
+          <option value="all">All</option>
+        </select>
+        <span style="color:var(--text-faint)">Click row for details</span>
+      </div>
     </div>
     <div class="table-wrap">
       <div class="table-container">
@@ -752,6 +841,9 @@ const SAVED_URL_KEY = "shso_grants_data_url";
 let grants = [], invoices = [], qtrs = [], financial = [], indirectData = [], supervisors = [];
 let filtered = [], curPage = 1;
 let sortCol = "__signal", sortDir = "asc", sortNum = true;
+let navList = [], navIdx = -1;
+let orgNavList = [];
+let showLegacy = true;  // global legacy toggle
 const PER = 100;
 const today = new Date();
 
@@ -761,20 +853,41 @@ const today = new Date();
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("ft-time").textContent = today.toLocaleString();
 
-  // Auto-load from saved URL if available
-  const savedURL = localStorage.getItem(SAVED_URL_KEY);
-  if (savedURL) {
-    document.getElementById("st-load").style.display = "flex";
-    fetchJSON(savedURL);
-  } else {
-    showUpload();
-  }
+  // Always show upload on load
+  showUpload();
+
+  // File input
+  document.getElementById("f-json").onchange = e => loadFromFile(e.target.files[0]);
 
   // Controls
   document.getElementById("q").oninput        = () => { curPage=1; filter(); };
   document.getElementById("f-type").onchange  = () => { curPage=1; filter(); };
   document.getElementById("f-fy").onchange    = () => { curPage=1; filter(); };
-  document.getElementById("f-sig").onchange   = () => { curPage=1; filter(); };
+  document.getElementById("f-sig").onchange    = () => { curPage=1; filter(); };
+  document.getElementById("f-legacy").onchange = () => { curPage=1; filter(); };
+  document.getElementById("per-page").onchange = () => { curPage=1; renderTable(); renderPagination(); };
+
+  // Legacy toggle
+  const legacyBtn = document.getElementById("legacy-toggle");
+  legacyBtn.onclick = () => {
+    showLegacy = !showLegacy;
+    legacyBtn.textContent = showLegacy ? "📦 Legacy: ON" : "📦 Legacy: OFF";
+    legacyBtn.style.borderColor = showLegacy ? "var(--border)" : "var(--accent)";
+    legacyBtn.style.color = showLegacy ? "var(--text-secondary)" : "var(--accent)";
+    curPage = 1; filter();
+  };
+
+  // Dark mode toggle
+  const html = document.documentElement;
+  const darkBtn = document.getElementById("dark-toggle");
+  const savedTheme = localStorage.getItem("shso_theme") || "light";
+  if (savedTheme === "dark") { html.setAttribute("data-theme","dark"); darkBtn.textContent = "☀️"; }
+  darkBtn.onclick = () => {
+    const isDark = html.getAttribute("data-theme") === "dark";
+    html.setAttribute("data-theme", isDark ? "light" : "dark");
+    darkBtn.textContent = isDark ? "🌙" : "☀️";
+    localStorage.setItem("shso_theme", isDark ? "light" : "dark");
+  };
   document.getElementById("btn-reset").onclick = reset;
 
   // Sort headers
@@ -792,61 +905,28 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ─────────────────────────────────────────────────────
-// JSON LOADER — single file, all data
+// FILE LOADER
 // ─────────────────────────────────────────────────────
-async function loadFromURL() {
-  const url = document.getElementById("json-url").value.trim();
-  if (!url) return;
-  const el = document.getElementById("url-status");
-  el.style.color = "var(--text-muted)";
-  el.textContent = "Connecting…";
-  document.getElementById("st-upload").style.display = "none";
-  document.getElementById("st-load").style.display   = "flex";
-  await fetchJSON(url);
-}
-
-async function fetchJSON(url) {
-  try {
-    const r = await fetch(url, { credentials: "include" });
-    if (r.status === 401 || r.status === 403) {
-      // M365 auth redirect — open in new tab so user can sign in
-      window.open(url, "_blank");
-      document.getElementById("st-load").style.display = "none";
-      showUpload();
-      const el = document.getElementById("url-status");
-      if (el) { el.style.color = "var(--amber)"; el.textContent = "Sign in completed? Click Load again."; }
-      return;
-    }
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    const data = await r.json();
-    ingestJSON(data, url);
-  } catch(e) {
-    console.warn("JSON fetch failed:", e);
-    document.getElementById("st-load").style.display = "none";
-    showUpload();
-    const el = document.getElementById("url-status");
-    if (el) { el.style.color = "var(--red)"; el.textContent = "Could not load file: " + e.message; }
-  }
-}
 
 function loadFromFile(file) {
   if (!file) return;
+  document.getElementById("st-upload").style.display = "none";
+  document.getElementById("st-load").style.display   = "flex";
   const r = new FileReader();
   r.onload = e => {
     try {
       const data = JSON.parse(e.target.result);
-      ingestJSON(data, null);
+      ingestJSON(data);
     } catch(err) {
-      alert("Invalid JSON file: " + err.message);
+      document.getElementById("st-load").style.display = "none";
+      showUpload();
+      document.getElementById("url-status").textContent = "Invalid JSON file: " + err.message;
     }
   };
   r.readAsText(file);
 }
 
-function ingestJSON(data, url) {
-  // Save URL for next session
-  if (url) localStorage.setItem(SAVED_URL_KEY, url);
-
+function ingestJSON(data) {
   // Populate all data arrays from the single JSON
   grants       = data.grants      || [];
   invoices     = data.invoices    || [];
@@ -865,8 +945,6 @@ function ingestJSON(data, url) {
 
   tryInit();
 }
-
-// fetchJSON() handles all data loading — see JSON LOADER section above
 
 // ─────────────────────────────────────────────────────
 // FILE HANDLERS
@@ -1030,6 +1108,7 @@ function reset() {
   document.getElementById("f-type").value = "";
   document.getElementById("f-fy").value = "";
   document.getElementById("f-sig").value = "";
+  document.getElementById("f-legacy").value = "";
   curPage = 1; filter();
 }
 
@@ -1038,6 +1117,7 @@ function filter() {
   const tp = document.getElementById("f-type").value;
   const fy = document.getElementById("f-fy").value;
   const sg = document.getElementById("f-sig").value;
+  const lg = document.getElementById("f-legacy").value;
 
   filtered = grants.filter(r => {
     const mq = !q ||
@@ -1049,7 +1129,9 @@ function filter() {
     const mt = !tp || r["Grant Type"] === tp;
     const mf = !fy || str(r["Sub Code"]||r["Year"]) === str(fy);
     const ms = !sg || calcSignal(str(r["Grant Number"]), parseInt(r["Sub Code"]||r["Year"])).level === parseInt(sg);
-    return mq && mt && mf && ms;
+    const ml = !lg || (lg === "legacy" ? r["legacy"] === true : !r["legacy"]);
+    const mlt = showLegacy || !r["legacy"];  // global legacy toggle
+    return mq && mt && mf && ms && ml && mlt;
   });
 
   filtered.sort((a, b) => {
@@ -1070,9 +1152,16 @@ function filter() {
 // ─────────────────────────────────────────────────────
 // RENDER LIST
 // ─────────────────────────────────────────────────────
+function getPerPage() {
+  const v = document.getElementById("per-page")?.value;
+  if (!v || v === "all") return Infinity;
+  return parseInt(v);
+}
+
 function renderTable() {
-  const start = (curPage-1)*PER;
-  const rows  = filtered.slice(start, start+PER);
+  const per   = getPerPage();
+  const start = per === Infinity ? 0 : (curPage-1)*per;
+  const rows  = per === Infinity ? filtered : filtered.slice(start, start+per);
   const tbody = document.getElementById("tbody");
   tbody.innerHTML = "";
 
@@ -1092,7 +1181,7 @@ function renderTable() {
     tr.onclick = () => showDetail(gn);
     tr.innerHTML = `
       <td><div class="cell-grant"><div class="grant-num">${esc(gn)}</div><div class="grant-short">${esc(short)}</div></div></td>
-      <td><span class="badge badge-${esc(str(row["Grant Type"]))}">${esc(str(row["Grant Type"])||"—")}</span></td>
+      <td><span class="badge badge-${esc(str(row["Grant Type"]))}">${esc(str(row["Grant Type"])||"—")}</span>${row["legacy"] ? ` <span class="badge badge-legacy">Legacy</span>` : ""}${isAmendment(str(row["Grant Number"])) ? ` <span class="badge badge-amendment">${amendmentLabel(str(row["Grant Number"]))}</span>` : ""}</td>
       <td><span class="badge badge-year">FY${fy||"—"}</span></td>
       <td><div class="org-name" title="${esc(str(row['Organization']))}"><a onclick="event.stopPropagation();showGI(this.dataset.org)" data-org="${esc(str(row['Organization']))}" style="color:var(--accent);cursor:pointer;text-decoration:none;font-weight:600" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${esc(str(row["Organization"])||"—")}</a></div></td>
       <td><div class="proj-title" title="${esc(str(row["Project Title"]))}">${esc(str(row["Project Title"])||"—")}</div></td>
@@ -1109,12 +1198,17 @@ function renderTable() {
     tbody.appendChild(tr);
   });
 
-  const total = filtered.length, end = Math.min(start+PER, total);
-  document.getElementById("res-info").innerHTML = `Showing <span>${start+1}–${end}</span> of <span>${total}</span> grants`;
+  const per2  = getPerPage();
+  const total = filtered.length;
+  const start2 = per2 === Infinity ? 0 : (curPage-1)*per2;
+  const end   = per2 === Infinity ? total : Math.min(start2+per2, total);
+  document.getElementById("res-info").innerHTML = `Showing <span>${total ? start2+1 : 0}–${end}</span> of <span>${total}</span> grants`;
 }
 
 function renderPagination() {
-  const total = filtered.length, pages = Math.ceil(total/PER);
+  const per   = getPerPage();
+  const total = filtered.length;
+  const pages = per === Infinity ? 1 : Math.ceil(total/per);
   const pg = document.getElementById("pgn");
   if (pages <= 1) { pg.style.display="none"; return; }
   pg.style.display = "flex";
@@ -1137,9 +1231,13 @@ function renderPagination() {
 // ─────────────────────────────────────────────────────
 // DETAIL VIEW
 // ─────────────────────────────────────────────────────
-function showDetail(gn) {
+function showDetail(gn, sourceList) {
   const grant = grants.find(r => r["Grant Number"] === gn);
   if (!grant) return;
+
+  // Set up navigation list
+  navList = sourceList || filtered.map(r => r["Grant Number"]);
+  navIdx  = navList.indexOf(gn);
 
   const fy        = parseInt(grant["Sub Code"]||grant["Year"]||0);
   const sig       = calcSignal(gn, fy);
@@ -1177,6 +1275,17 @@ function showDetail(gn) {
   document.getElementById("bc-text").textContent = gn;
   document.getElementById("hdr-title").textContent = "Grant Detail";
 
+  // Nav arrows
+  const navEl = document.getElementById("grant-nav");
+  if (navList.length > 1) {
+    navEl.style.display = "flex";
+    document.getElementById("nav-prev").disabled = navIdx <= 0;
+    document.getElementById("nav-next").disabled = navIdx >= navList.length - 1;
+    document.getElementById("nav-info").textContent = `${navIdx+1} / ${navList.length}`;
+  } else {
+    navEl.style.display = "none";
+  }
+
   const dv = document.getElementById("view-detail");
   dv.innerHTML = `
   <div class="detail">
@@ -1195,6 +1304,8 @@ function showDetail(gn) {
         <div class="hero-meta">
           <span class="badge badge-${esc(str(grant["Grant Type"]))}">${esc(str(grant["Grant Type"])||"—")}</span>
           <span class="badge badge-year">FY${fy}</span>
+          ${grant["legacy"] ? `<span class="badge badge-legacy">Legacy</span>` : ""}
+          ${isAmendment(gn) ? `<span class="badge badge-amendment">${amendmentLabel(gn)}</span>` : ""}
           <span class="signal signal-${sig.level}">${sig.label}</span>
         </div>
       </div>
@@ -1204,6 +1315,7 @@ function showDetail(gn) {
         ${heroLink(grant["Project Details URL"], "📋", "Project Details")}
         ${heroLink(grant["Indirect Costs URL"],  "💰", "Indirect Costs")}
         ${heroLink(grant["Scoring Sheet URL"],   "⭐", "Scoring Sheet")}
+        <button class="print-btn" onclick="exportPDF('${esc(gn)}')" title="Export as PDF">📄 Export PDF</button>
       </div>
     </div>
 
@@ -1362,6 +1474,14 @@ function qtrDetailTable(rows) {
 }
 
 function invDetailTable(rows) {
+  const regular = rows.filter(r => !isSupplemental(r["Invoice Number"]));
+  const supp    = rows.filter(r => isSupplemental(r["Invoice Number"]));
+  const rowHtml = r => `<tr>
+      <td class="left"><span style="font-family:'JetBrains Mono',monospace;font-size:11px">${esc(str(r["Invoice Number"]))}</span>${isSupplemental(r["Invoice Number"]) ? ` <span class="badge badge-supplemental">Supplemental</span>` : ""}</td>
+      <td class="left" style="color:var(--text-secondary)">${esc(str(r["Invoice Period"]))}</td>
+      <td><span style="font-size:11px;color:var(--green)">${esc(str(r["Invoice Status"]))}</span></td>
+      <td>${str(r["Invoice URL"]).startsWith("http")?`<a class="lbtn" href="${esc(str(r["Invoice URL"]))}" target="_blank" data-tip="Open Invoice">🔗</a>`:'<span class="status-null">—</span>'}</td>
+    </tr>`;
   return `<table class="status-table">
     <thead><tr>
       <th class="left">Invoice Number</th>
@@ -1369,12 +1489,7 @@ function invDetailTable(rows) {
       <th>Status</th>
       <th>Link</th>
     </tr></thead>
-    <tbody>${rows.map(inv=>`<tr>
-      <td class="left"><span style="font-family:'JetBrains Mono',monospace;font-size:11px">${esc(str(inv["Invoice Number"]))}</span></td>
-      <td class="left" style="color:var(--text-secondary)">${esc(str(inv["Invoice Period"]))}</td>
-      <td><span style="font-size:11px;color:var(--green)">${esc(str(inv["Invoice Status"]))}</span></td>
-      <td>${str(inv["Invoice URL"]).startsWith("http")?`<a class="lbtn" href="${esc(str(inv["Invoice URL"]))}" target="_blank" data-tip="Open Invoice">🔗</a>`:'<span class="status-null">—</span>'}</td>
-    </tr>`).join("")}</tbody>
+    <tbody>${regular.map(rowHtml).join("")}${supp.length ? `<tr><td colspan="4" style="padding:6px 10px;font-size:11px;color:var(--text-faint);border-top:2px dashed var(--border);font-family:'Lexend',sans-serif;font-weight:600;letter-spacing:0.05em">SUPPLEMENTAL INVOICES</td></tr>${supp.map(rowHtml).join("")}` : ""}</tbody>
   </table>`;
 }
 
@@ -1498,23 +1613,54 @@ function icPanel(icRow) {
 }
 
 // ─────────────────────────────────────────────────────
-// COMPLIANCE LOGIC (mirrors DAX)
+// COMPLIANCE LOGIC
 // ─────────────────────────────────────────────────────
+function isLegacy(gn) {
+  const g = grants.find(r => r["Grant Number"] === gn);
+  return !!(g && g["legacy"] === true);
+}
+
+function isSupplemental(invNum) {
+  return str(invNum).split("-").some(s => s.toLowerCase() === "ext");
+}
+
+function isAmendment(gn) {
+  return /-(?:A\d+|\d+)$/.test(str(gn));
+}
+
+function amendmentLabel(gn) {
+  const m = str(gn).match(/-A?(\d+)$/);
+  return m ? "Amendment " + m[1] : null;
+}
+
 function calcSignal(gn, fy) {
   if (!fy || !gn) return { level:"na", label:"—" };
-  const gInv = invoices.filter(r => r["Parent Grant Number"]===gn && str(r["Invoice Status"])!=="Invoice In Process");
+  const legacy = isLegacy(gn);
+  const gInv = invoices.filter(r => r["Parent Grant Number"]===gn && !isSupplemental(r["Invoice Number"]) && str(r["Invoice Status"])!=="Invoice In Process");
   const gQTR = qtrs.filter(r => r["Parent Grant Number"]===gn);
-  const invS = calcINVStatus(gInv, fy);
-  const qtrS = calcQTRStatus(gQTR, fy);
+  const invS = calcINVStatus(gInv, fy, legacy);
+  const qtrS = calcQTRStatus(gQTR, fy, legacy);
   const invMiss = Object.values(invS).filter(v=>v!==null).length;
   const qtrMiss = Object.values(qtrS).filter(v=>v!==null).length;
   const invDue  = countDueMonths(fy);
   const qtrDue  = countDueQTRs(fy);
   const invSub  = countInvSub(gInv);
   const qtrSub  = countQTRSub(gQTR);
-  const invRate = invDue > 0 ? invSub/invDue : 1;
-  const qtrRate = qtrDue > 0 ? qtrSub/qtrDue : 1;
-  let score = Math.round(((1-qtrRate)*0.60 + (1-invRate)*0.40)*100);
+
+  if (legacy) {
+    const totalSub = invSub + qtrSub;
+    if (totalSub === 0 && (invDue > 0 || qtrDue > 0)) return {level:5, label:"SIGNAL 5"};
+    let score = Math.round(((1 - (qtrDue>0?qtrSub/qtrDue:1))*0.50 + (1 - (invDue>0?invSub/invDue:1))*0.50)*50);
+    score = Math.max(0, Math.min(100, score));
+    if (invMiss===0 && qtrMiss===0) return {level:0, label:"SIGNAL 0"};
+    if (score<=10) return {level:1, label:"SIGNAL 1"};
+    if (score<=25) return {level:2, label:"SIGNAL 2"};
+    return {level:3, label:"SIGNAL 3"};
+  }
+
+  const iRate = invDue > 0 ? invSub/invDue : 1;
+  const qRate = qtrDue > 0 ? qtrSub/qtrDue : 1;
+  let score = Math.round(((1-qRate)*0.60 + (1-iRate)*0.40)*100);
   const consec = Object.values(qtrS).filter(v=>v!==null).length;
   if (consec >= 2) score += 15;
   if (invMiss===0 && qtrMiss===0) score -= 10;
@@ -1527,57 +1673,49 @@ function calcSignal(gn, fy) {
   return {level:5, label:"SIGNAL 5"};
 }
 
-function calcINVStatus(gInv, fy) {
+function calcINVStatus(gInv, fy, legacy) {
   const t=today, py=fy-1, s={};
   const sub = m => gInv.some(r=>{ const p=str(r["Invoice Number"]).split("-"); return p.length>=3&&p[2]===m; });
-  const octS = sub("Oct");
-  if (!octS) { s["Oct"] = t>=new Date(py,10,1) ? "WARNING" : null; }
-  const novS = sub("Nov");
-  if (!novS) {
-    const w=new Date(py,11,1), e=new Date(py,11,15), o=new Date(fy,0,1);
-    s["Nov"] = t<w ? null : octS ? (t<e?"WARNING":t<o?"ESCALATION":"OVERDUE") : "WARNING";
-  }
-  const decS = sub("Dec");
-  if (!decS) {
-    const w=new Date(fy,0,1), e=new Date(fy,0,15), o=new Date(fy,1,1);
-    s["Dec"] = t<w ? null : (octS||sub("Nov")) ? (t<e?"WARNING":t<o?"ESCALATION":"OVERDUE") : "WARNING";
-  }
-  [["Jan",new Date(fy,1,1),new Date(fy,1,15),new Date(fy,2,1)],
-   ["Feb",new Date(fy,2,1),new Date(fy,2,15),new Date(fy,3,1)],
-   ["Mar",new Date(fy,3,1),new Date(fy,3,15),new Date(fy,4,1)],
-   ["Apr",new Date(fy,4,1),new Date(fy,4,15),new Date(fy,5,1)],
-   ["May",new Date(fy,5,1),new Date(fy,5,15),new Date(fy,6,1)],
-   ["Jun",new Date(fy,6,1),new Date(fy,6,15),new Date(fy,7,1)],
-   ["Jul",new Date(fy,7,1),new Date(fy,7,15),new Date(fy,8,1)],
-   ["Aug",new Date(fy,8,1),new Date(fy,8,15),new Date(fy,9,1)],
-   ["Sep",new Date(fy,9,1),new Date(fy,9,11),new Date(fy,9,21)]
-  ].forEach(([m,w,e,o])=>{ if(!sub(m)) s[m]=t<w?null:t<e?"WARNING":t<o?"ESCALATION":"OVERDUE"; });
+  const grace = m => ["Jul","Aug","Sep"].includes(m) ? 3 : 7;
+  const dueDate = (base, m) => { const d=new Date(base); d.setDate(d.getDate()+grace(m)); return d; };
+  [["Oct",new Date(py,10,1)],["Nov",new Date(py,11,1)],["Dec",new Date(fy,0,1)],
+   ["Jan",new Date(fy,1,1)],["Feb",new Date(fy,2,1)],["Mar",new Date(fy,3,1)],
+   ["Apr",new Date(fy,4,1)],["May",new Date(fy,5,1)],["Jun",new Date(fy,6,1)],
+   ["Jul",new Date(fy,7,1)],["Aug",new Date(fy,8,1)],["Sep",new Date(fy,9,1)]
+  ].forEach(([m,base]) => {
+    if (sub(m)) return;
+    if (legacy) return;
+    const w = dueDate(base, m);
+    const e = new Date(w); e.setDate(e.getDate()+7);
+    const o = new Date(w); o.setDate(o.getDate()+14);
+    s[m] = t<w ? null : t<e ? "WARNING" : t<o ? "ESCALATION" : "OVERDUE";
+  });
   return s;
 }
 
-function calcQTRStatus(gQTR, fy) {
+function calcQTRStatus(gQTR, fy, legacy) {
   const t=today, s={};
   const sub = q => gQTR.some(r=>{ const p=str(r["QTR Number"]).split("-"); return p.length>=2&&p[1]===q; });
-  [["QTR1",new Date(fy,0,15),new Date(fy,0,21),new Date(fy,1,1)],
-   ["QTR2",new Date(fy,3,1), new Date(fy,3,15),new Date(fy,4,1)],
-   ["QTR3",new Date(fy,6,1), new Date(fy,6,15),new Date(fy,7,1)],
-   ["QTR4",new Date(fy,9,1), new Date(fy,9,15),new Date(fy,10,1)],
-   ["QTR5",new Date(fy,10,1),new Date(fy,10,7),new Date(fy,10,15)]
-  ].forEach(([q,w,e,o])=>{ if(!sub(q)) s[q]=t<w?null:t<e?"WARNING":t<o?"ESCALATION":"OVERDUE"; });
+  [["QTR1",new Date(fy,0,15),new Date(fy,0,22),new Date(fy,1,1)],
+   ["QTR2",new Date(fy,3,1), new Date(fy,3,8), new Date(fy,4,1)],
+   ["QTR3",new Date(fy,6,1), new Date(fy,6,8), new Date(fy,7,1)],
+   ["QTR4",new Date(fy,9,1), new Date(fy,9,8), new Date(fy,10,1)]
+  ].forEach(([q,w,e,o])=>{
+    if (sub(q)) return;
+    if (legacy) return;
+    s[q] = t<w?null:t<e?"WARNING":t<o?"ESCALATION":"OVERDUE";
+  });
   return s;
 }
 
 function countDueMonths(fy) {
   const t=today, py=fy-1; let n=0;
-  [[py,10],[py,11],[fy,0],[fy,1],[fy,2],[fy,3],[fy,4],[fy,5],[fy,6],[fy,7],[fy,8],[fy,9]]
-    .forEach(([y,m]) => { if(t>=new Date(y,m+1,1)) n++; });
-  // Simplified: just check first of following month
-  if(t>=new Date(py,10,1))n++;  if(t>=new Date(py,11,1))n++;
-  if(t>=new Date(fy,0,1))n++;   if(t>=new Date(fy,1,1))n++;
-  if(t>=new Date(fy,2,1))n++;   if(t>=new Date(fy,3,1))n++;
-  if(t>=new Date(fy,4,1))n++;   if(t>=new Date(fy,5,1))n++;
-  if(t>=new Date(fy,6,1))n++;   if(t>=new Date(fy,7,1))n++;
-  if(t>=new Date(fy,8,1))n++;   if(t>=new Date(fy,9,1))n++;
+  const grace = m => ["Jul","Aug","Sep"].includes(m) ? 3 : 7;
+  [["Oct",new Date(py,10,1)],["Nov",new Date(py,11,1)],["Dec",new Date(fy,0,1)],
+   ["Jan",new Date(fy,1,1)],["Feb",new Date(fy,2,1)],["Mar",new Date(fy,3,1)],
+   ["Apr",new Date(fy,4,1)],["May",new Date(fy,5,1)],["Jun",new Date(fy,6,1)],
+   ["Jul",new Date(fy,7,1)],["Aug",new Date(fy,8,1)],["Sep",new Date(fy,9,1)]
+  ].forEach(([m,d]) => { const due=new Date(d); due.setDate(due.getDate()+grace(m)); if(t>=due) n++; });
   return Math.min(n, 12);
 }
 
@@ -1585,23 +1723,73 @@ function countDueQTRs(fy) {
   const t=today; let n=0;
   if(t>=new Date(fy,0,15))n++; if(t>=new Date(fy,3,1))n++;
   if(t>=new Date(fy,6,1))n++;  if(t>=new Date(fy,9,1))n++;
-  if(t>=new Date(fy,10,1))n++;
   return n;
 }
 
 function countInvSub(gInv) {
+  const clean = gInv.filter(r => !isSupplemental(r["Invoice Number"]));
   return ["Oct","Nov","Dec","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep"]
-    .filter(m => gInv.some(r=>{ const p=str(r["Invoice Number"]).split("-"); return p.length>=3&&p[2]===m; })).length;
+    .filter(m => clean.some(r=>{ const p=str(r["Invoice Number"]).split("-"); return p.length>=3&&p[2]===m; })).length;
 }
 
 function countQTRSub(gQTR) {
-  return ["QTR1","QTR2","QTR3","QTR4","QTR5"]
+  return ["QTR1","QTR2","QTR3","QTR4"]
     .filter(q => gQTR.some(r=>{ const p=str(r["QTR Number"]).split("-"); return p.length>=2&&p[1]===q; })).length;
 }
+
 
 // ─────────────────────────────────────────────────────
 // UI HELPERS
 // ─────────────────────────────────────────────────────
+function exportPDF(gn) {
+  const btn = document.querySelector(".print-btn");
+  if (btn) { btn.textContent = "⏳ Generating…"; btn.disabled = true; }
+
+  const el = document.getElementById("view-detail");
+  const filename = (gn || "grant").replace(/\s+/g, "_") + ".pdf";
+
+  const opt = {
+    margin:      [10, 10, 10, 10],
+    filename:    filename,
+    image:       { type: "jpeg", quality: 0.95 },
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false },
+    jsPDF:       { unit: "mm", format: "letter", orientation: "portrait" },
+    pagebreak:   { mode: ["css", "legacy"] }
+  };
+
+  // Temporarily force light styles on the element for PDF
+  const prevBg = el.style.background;
+  const prevColor = el.style.color;
+  el.style.background = "#ffffff";
+  el.style.color = "#000000";
+
+  // Hide print button during capture
+  if (btn) btn.style.display = "none";
+
+  html2pdf().set(opt).from(el).save().then(() => {
+    el.style.background = prevBg;
+    el.style.color = prevColor;
+    if (btn) { btn.style.display = ""; btn.textContent = "📄 Export PDF"; btn.disabled = false; }
+  }).catch(err => {
+    el.style.background = prevBg;
+    el.style.color = prevColor;
+    if (btn) { btn.style.display = ""; btn.textContent = "📄 Export PDF"; btn.disabled = false; }
+    alert("PDF error: " + err.message);
+  });
+}
+
+function navGrant(dir) {
+  const newIdx = navIdx + dir;
+  if (newIdx < 0 || newIdx >= navList.length) return;
+  showDetail(navList[newIdx], navList);
+  window.scrollTo(0, 0);
+}
+
+function showDetailFromOrg(gn) {
+  showDetail(gn, orgNavList);
+  window.scrollTo(0, 0);
+}
+
 function goList() {
   document.getElementById("view-detail").style.display = "none";
   document.getElementById("view-list").style.display   = "block";
@@ -1679,6 +1867,9 @@ function renderGI(orgName, orgGrants, fyList, fyFilter) {
   if (typeof fyList === "string") fyList = fyList.split(",").filter(Boolean);
   const filtered = fyFilter ? orgGrants.filter(r => str(r["Sub Code"]||r["Year"]) === fyFilter) : orgGrants;
 
+  // Set org nav list for Next/Back navigation
+  orgNavList = filtered.map(r => r["Grant Number"]);
+
   // ── SCORE CALCULATION ──────────────────────────────
   // 1. Financial Utilization (25%) — avg budget used
   // RULE: Current FY grants are excluded from utilization scoring because
@@ -1706,27 +1897,33 @@ function renderGI(orgName, orgGrants, fyList, fyFilter) {
   const rawFinUtil = finScores.length ? finScores.reduce((a,b)=>a+b,0)/finScores.length : null;
   const finUtil = rawFinUtil !== null ? tieredUtil(rawFinUtil) : 0.75;
 
-  // 2. Invoice Compliance (15%) — on-time rate across all grants
-  let invSubTotal = 0, invDueTotal = 0;
+  // 2. Invoice Compliance (15%) — on-time rate, new GEARS 75% weight, legacy 25%
+  let invSubNew=0, invDueNew=0, invSubLeg=0, invDueLeg=0;
   filtered.forEach(r => {
     const gn = str(r["Grant Number"]);
     const fy = parseInt(r["Sub Code"]||r["Year"]||0);
-    const gInv = invoices.filter(i => i["Parent Grant Number"]===gn && str(i["Invoice Status"])!=="Invoice In Process");
-    invSubTotal += countInvSub(gInv);
-    invDueTotal += countDueMonths(fy);
+    const gInv = invoices.filter(i => i["Parent Grant Number"]===gn && !isSupplemental(i["Invoice Number"]) && str(i["Invoice Status"])!=="Invoice In Process");
+    if (r["legacy"]) { invSubLeg += countInvSub(gInv); invDueLeg += countDueMonths(fy); }
+    else             { invSubNew += countInvSub(gInv); invDueNew += countDueMonths(fy); }
   });
-  const invRate = invDueTotal > 0 ? invSubTotal/invDueTotal : 1;
+  const invRateNew = invDueNew > 0 ? invSubNew/invDueNew : 1;
+  const invRateLeg = invDueLeg > 0 ? invSubLeg/invDueLeg : 1;
+  const invRate = invDueNew > 0 && invDueLeg > 0 ? invRateNew*0.75 + invRateLeg*0.25
+                : invDueNew > 0 ? invRateNew : invRateLeg;
 
-  // 3. QTR Compliance (15%) — on-time rate across all grants
-  let qtrSubTotal = 0, qtrDueTotal = 0;
+  // 3. QTR Compliance (15%) — on-time rate, new GEARS 75% weight, legacy 25%
+  let qtrSubNew=0, qtrDueNew=0, qtrSubLeg=0, qtrDueLeg=0;
   filtered.forEach(r => {
     const gn = str(r["Grant Number"]);
     const fy = parseInt(r["Sub Code"]||r["Year"]||0);
     const gQTR = qtrs.filter(q => q["Parent Grant Number"]===gn);
-    qtrSubTotal += countQTRSub(gQTR);
-    qtrDueTotal += countDueQTRs(fy);
+    if (r["legacy"]) { qtrSubLeg += countQTRSub(gQTR); qtrDueLeg += countDueQTRs(fy); }
+    else             { qtrSubNew += countQTRSub(gQTR); qtrDueNew += countDueQTRs(fy); }
   });
-  const qtrRate = qtrDueTotal > 0 ? qtrSubTotal/qtrDueTotal : 1;
+  const qtrRateNew = qtrDueNew > 0 ? qtrSubNew/qtrDueNew : 1;
+  const qtrRateLeg = qtrDueLeg > 0 ? qtrSubLeg/qtrDueLeg : 1;
+  const qtrRate = qtrDueNew > 0 && qtrDueLeg > 0 ? qtrRateNew*0.75 + qtrRateLeg*0.25
+                : qtrDueNew > 0 ? qtrRateNew : qtrRateLeg;
 
   // 4. Program Consistency (10%) — financial utilization variance across FYs
   let consistScore = 0.5;
@@ -1947,7 +2144,7 @@ function renderGI(orgName, orgGrants, fyList, fyFilter) {
               MONTHS.forEach(m => { actual += num(finRow["Monthly "+m]||0); });
               pctUsed = actual/apv;
             }
-            return `<tr onclick="showDetail('${esc(gn)}')" style="cursor:pointer">
+            return `<tr onclick="showDetailFromOrg('${esc(gn)}')" style="cursor:pointer">
               <td class="left"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:500">${esc(gn)}</span></td>
               <td><span class="badge badge-${esc(str(r["Grant Type"]))}">${esc(str(r["Grant Type"])||"—")}</span></td>
               <td><span class="badge badge-year">FY${fy}</span></td>
