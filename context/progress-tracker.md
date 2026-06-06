@@ -74,6 +74,34 @@ fixed. Foundation documentation is complete. Chrome extension has not been start
 
 ---
 
+## ⚠️ REQUIRED BEFORE PRODUCTION — Full Pipeline Re-Run
+
+Once all dashboard bugs are fixed and the canonical schema is stable, the entire
+pipeline must be re-run from scratch. The current `grants_data.json` (and the
+`old_gears_data.json` used as the legacy base) were generated before these fixes:
+
+- **FIN-1**: Multi-EA financial sum — FY25 EE grants in old JSON show understated
+  expenditures (first EA row only). All FY25 EE financial figures are wrong in the
+  current JSON.
+- **FIN-2**: Amendment `-1` join — FY25 amended grants may have missing financial
+  data in the old JSON depending on when the Financial Report suffix changed.
+- **Budget field** (`Apv Total` priority) — any FY25 EDUC grant with both fields
+  populated was using `Apv Program Total` (federal + match) as approved budget.
+- **Vendor inconsistencies** (trailing spaces, QTR normalization) — already handled
+  at runtime but should be normalized at write time before extension build.
+
+**Re-run order:**
+1. Finish all remaining bug fixes (SIG-1, GI-1, canonical schema)
+2. Re-run `master_scrape.py` in full (Step 1 exports + Step 2 scraper + Step 3 merge)
+3. Verify FY25 EE financial figures match portal for a sample of grants
+4. Use the new clean JSON as the authoritative base going forward
+5. Regenerate the EDUC FY25 vs FY26 Word report from the corrected data
+
+**Do not build the Chrome extension against the current JSON** — it contains known
+incorrect financial data for FY25 EE grants.
+
+---
+
 ## Open Questions
 
 - [ ] Do the 7 amendment grants have different landing page URLs under the `-1`
