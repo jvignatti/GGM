@@ -1532,12 +1532,12 @@ function icPanel(icRow) {
   ];
   const hasEE = eeCats.some(([,col]) => num(icRow[col]) > 0);
   const checkRow = (label, costVal, indAmt) => {
-    const hasCost = num(costVal) > 0;
     const indNum  = indAmt !== null ? num(indAmt) : null;
+    const inBase  = indNum !== null && indNum > 0;  // ✅ only when IC was actually applied
     return `<tr style="border-bottom:1px solid var(--surface2)">
       <td style="padding:8px 10px;font-size:13px;color:var(--text-secondary);font-weight:500">${label}</td>
       <td style="text-align:center;padding:8px 10px">
-        ${hasCost
+        ${inBase
           ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;background:var(--green-bg);border:1px solid var(--green-border);border-radius:5px;font-size:13px">✅</span>`
           : `<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text-faint);font-size:11px">—</span>`}
       </td>
@@ -1548,7 +1548,7 @@ function icPanel(icRow) {
   };
   const colHead = `<thead><tr>
     <th style="padding:7px 10px;text-align:left;font-family:'Lexend',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border)">Category</th>
-    <th style="padding:7px 10px;text-align:center;font-family:'Lexend',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border)">Has Cost</th>
+    <th style="padding:7px 10px;text-align:center;font-family:'Lexend',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border)">In IC Base</th>
     <th style="padding:7px 10px;text-align:right;font-family:'Lexend',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border)">IC Amount</th>
   </tr></thead>`;
   return `
