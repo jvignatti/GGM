@@ -1249,7 +1249,7 @@ function showDetail(gn, sourceList) {
   const invStatus = calcINVStatus(gInv, fy);
 
   // Budget figures
-  const apvTotal  = num(grant["Apv Program Total"] || grant["Apv Total"]);
+  const apvTotal  = num(grant["Apv Total"] || grant["Apv Program Total"]);
   const apvMatch  = num(grant["Apv Match Total"]);
   const apvIC     = num(grant["Apv Indirect Costs"] || grant["Apv Total Indirect"]);
 
@@ -1912,7 +1912,7 @@ function renderGI(orgName, orgGrants, fyList, fyFilter) {
     const fy  = parseInt(r["Sub Code"]||r["Year"]||0);
     // Skip current FY — cannot penalize for incomplete spending year
     if (fy >= currentFY) return;
-    const apv = num(r["Apv Program Total"]||r["Apv Total"]);
+    const apv = num(r["Apv Total"]||r["Apv Program Total"]);
     const { actTotal: actual } = getFinancialSummary(gn);
     if (apv > 0 && actual > 0) {
       finScores.push(Math.min(actual/apv, 1));
@@ -1959,7 +1959,7 @@ function renderGI(orgName, orgGrants, fyList, fyFilter) {
       const fyGrants = orgGrants.filter(r => str(r["Sub Code"]||r["Year"])===fy);
       const utils = [];
       fyGrants.forEach(r => {
-        const apv = num(r["Apv Program Total"]||r["Apv Total"]);
+        const apv = num(r["Apv Total"]||r["Apv Program Total"]);
         const { actTotal: actual } = getFinancialSummary(str(r["Grant Number"]));
         if (apv > 0 && actual > 0) {
           utils.push(actual/apv);
@@ -2159,7 +2159,7 @@ function renderGI(orgName, orgGrants, fyList, fyFilter) {
             const gn  = str(r["Grant Number"]);
             const fy  = parseInt(r["Sub Code"]||r["Year"]||0);
             const sig = calcSignal(gn, fy);
-            const apv = num(r["Apv Program Total"]||r["Apv Total"]);
+            const apv = num(r["Apv Total"]||r["Apv Program Total"]);
             const { actTotal: actual } = getFinancialSummary(gn);
             let pctUsed = null;
             if (apv > 0 && actual > 0) { pctUsed = actual/apv; }

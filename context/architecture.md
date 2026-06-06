@@ -151,7 +151,14 @@ comparing strings.
 The extension relies on the browser's existing authenticated session cookies. No
 username, password, or session token is ever read, stored, or logged.
 
-**INV-8: Financial row lookup uses startsWith fallback for amended grants.**
+**INV-8: Some grants have no match requirement — Apv Match Total = $0 is valid data.**
+The Grant Summary export sets `Apv Match Total = $0.00` for grants that carry no
+match obligation (e.g. EDUC-2026-Milton-00018-GR2015). The dashboard correctly hides
+the Match Approved / Match Actual / Match Remaining row when `apvMatch === 0`. This
+is not a bug — do not attempt to infer a match amount from other fields for these grants.
+Confirmed vendor behavior: $0 match grants exist across EDUC type at minimum.
+
+**INV-9: Financial row lookup uses startsWith fallback for amended grants.**
 When a grant is formally amended, the SHSO Financial Report switches its Document
 Name to `<GrantNumber>-1` (e.g. `EDUC-2026-BAADA-00031-GR1997-1`) while the Grant
 Summary, invoices, and QTRs stay on the base number (`EDUC-2026-BAADA-00031-GR1997`).
