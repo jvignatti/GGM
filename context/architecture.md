@@ -162,7 +162,14 @@ Not fixing now — EE grants are out of scope for current work. Revisit when
 EE Grantee Intelligence is needed. Correct org names must come from the portal
 or a manual mapping table; the Grant Summary export cannot be trusted for this.
 
-**INV-9: Some grants have no match requirement — Apv Match Total = $0 is valid data.**
+**INV-9: IC panel must require both a charged rate AND approved dollar amount.**
+Some grants have `ICR Charged on Grant > 0` (rate was entered on the IC form) but
+`Total Indirect Costs = $0` because the dollar approval never happened. The IC panel
+must gate on `charged > 0 AND totalIC > 0`. Using rate alone causes the panel to
+render with no meaningful content. Confirmed on EE-2026-St.Johnsb-GR2020 and
+EE-2026-Woodstock-GR2023 (15% rate entered, $0 approved amount).
+
+**INV-10: Some grants have no match requirement — Apv Match Total = $0 is valid data.**
 The Grant Summary export sets `Apv Match Total = $0.00` for grants that carry no
 match obligation (e.g. EDUC-2026-Milton-00018-GR2015). The dashboard correctly hides
 the Match Approved / Match Actual / Match Remaining row when `apvMatch === 0`. This

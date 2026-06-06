@@ -1511,9 +1511,9 @@ function invCell(month, status, rows) {
 function icPanel(icRow) {
   if (!icRow) return "";
   const charged  = num(icRow["ICR Charged on Grant"]);
-  if (charged <= 0) return "";  // No IC approved — show nothing
-  const approved = num(icRow["Approved ICR Rate"]);
   const totalIC  = num(icRow["Total Indirect Costs"]);
+  if (charged <= 0 || totalIC <= 0) return "";  // rate entered but no approved $ amount — hide panel
+  const approved = num(icRow["Approved ICR Rate"]);
   const mtdc     = num(icRow["Sum Indirect Cost Base"]);
   const hasIC    = charged > 0;
   const stdCats = [
