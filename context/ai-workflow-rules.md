@@ -1,5 +1,17 @@
 # AI Workflow Rules — GGM Chrome Extension
 
+## Working Style
+
+This project is worked on-demand — sessions happen when the user has time, not on
+a fixed schedule. Between sessions, the codebase is live and in use.
+
+**Claude's role between units:** Suggest from the open list (progress-tracker.md
+open bugs + open questions) but do not assume priority. The user decides what to
+work on. Surface relevant findings, flag regressions, propose the next logical
+step — but wait for direction before starting.
+
+**Do not push a roadmap.** The 18-unit build plan is a reference, not a sprint.
+
 ## Overall Approach
 
 Build one unit at a time. Every unit has a spec file in `context/specs/` that defines
