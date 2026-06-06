@@ -151,7 +151,18 @@ comparing strings.
 The extension relies on the browser's existing authenticated session cookies. No
 username, password, or session token is ever read, stored, or logged.
 
-**INV-8: Some grants have no match requirement — Apv Match Total = $0 is valid data.**
+**INV-8: Two distinct EE organizations share the same "Bennington" org name in the Grant Summary export.**
+The portal's Grant Summary truncates both "Bennington County Sheriff's Department" and
+"Town of Bennington" to `Organization = "Bennington"` in new GEARS (FY25+FY26).
+Affected grants: GR1992, GR2011 (FY26) and GR1897-1, GR1906 (FY25).
+Legacy data correctly uses the full org names. Current impact: Grantee Intelligence
+groups both orgs into one "Bennington" card, mixing scores, invoices, and financials.
+SHSO Score saved for "Bennington" applies to both entities incorrectly.
+Not fixing now — EE grants are out of scope for current work. Revisit when
+EE Grantee Intelligence is needed. Correct org names must come from the portal
+or a manual mapping table; the Grant Summary export cannot be trusted for this.
+
+**INV-9: Some grants have no match requirement — Apv Match Total = $0 is valid data.**
 The Grant Summary export sets `Apv Match Total = $0.00` for grants that carry no
 match obligation (e.g. EDUC-2026-Milton-00018-GR2015). The dashboard correctly hides
 the Match Approved / Match Actual / Match Remaining row when `apvMatch === 0`. This
