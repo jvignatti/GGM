@@ -685,6 +685,7 @@ td { padding: 8px 14px; vertical-align: middle; }
     <div class="stat-chip"><span class="stat-chip-num" id="stat-grants">—</span><span class="stat-chip-label">Grants</span></div>
     <div class="stat-chip"><span class="stat-chip-num" id="stat-fy">—</span><span class="stat-chip-label">FYs</span></div>
     <button id="legacy-toggle" title="Toggle Legacy Grants in signal calculation" style="background:none;border:1px solid rgba(255,255,255,0.3);border-radius:var(--radius);color:rgba(255,255,255,0.8);cursor:pointer;font-size:11px;padding:4px 10px;font-weight:500;transition:all 0.15s">📦 Legacy: ON</button>
+    <button id="dark-toggle" title="Toggle dark mode" style="background:none;border:1px solid rgba(255,255,255,0.3);border-radius:var(--radius);color:rgba(255,255,255,0.8);cursor:pointer;font-size:15px;padding:4px 8px;line-height:1;transition:all 0.15s">🌙</button>
     <div class="header-meta" id="hdr-meta">Loading...</div>
   </div>
 </header>
@@ -779,7 +780,6 @@ td { padding: 8px 14px; vertical-align: middle; }
       </div>
       <div class="toolbar-right">
         <button class="btn btn-ghost" id="btn-reset">Reset filters</button>
-        <button id="dark-toggle" title="Toggle dark mode">🌙</button>
       </div>
     </div>
     <div class="results-bar">
@@ -1243,7 +1243,7 @@ function showDetail(gn, sourceList) {
   const sig       = calcSignal(gn, fy);
   const gInv      = invoices.filter(r => r["Parent Grant Number"] === gn);
   const gQTR      = qtrs.filter(r => r["Parent Grant Number"] === gn);
-  const finRow    = financial.find(r => str(r["Grant Number"]) === gn || str(r["Document Name"]) === gn);
+  const { synth: finRow, actTotal, actMatch } = getFinancialSummary(gn);
   const icRow     = indirectData.find(r => str(r["Grant Number"]) === gn);
   const qtrStatus = calcQTRStatus(gQTR, fy);
   const invStatus = calcINVStatus(gInv, fy);
@@ -1252,16 +1252,6 @@ function showDetail(gn, sourceList) {
   const apvTotal  = num(grant["Apv Program Total"] || grant["Apv Total"]);
   const apvMatch  = num(grant["Apv Match Total"]);
   const apvIC     = num(grant["Apv Indirect Costs"] || grant["Apv Total Indirect"]);
-
-  // Actuals from financial
-  const MONTHS = ["October","November","December","January","February","March","April","May","June","July","August","September"];
-  let actTotal = 0, actMatch = 0;
-  if (finRow) {
-    MONTHS.forEach(m => {
-      actTotal += num(finRow["Monthly " + m] || finRow["Monthly" + m] || 0);
-      actMatch += num(finRow["Monthly " + m + " Match"] || finRow["Monthly" + m + "Match"] || 0);
-    });
-  }
 
   const pctUsed  = apvTotal  > 0 ? actTotal / apvTotal  : null;
   const pctMatch = apvMatch  > 0 ? actMatch / apvMatch  : null;
@@ -1345,7 +1335,7 @@ function showDetail(gn, sourceList) {
         ${finCell("Match Actual", actMatch, apvMatch > 0 ? actMatch/apvMatch : null, apvMatch, "Actual match recorded")}
         ${finCell("Match Remaining", apvMatch - actMatch, null, null, "Outstanding match balance")}
       </div>` : ""}
-      ${finRow ? monthlyTable(finRow, MONTHS) : ""}
+      ${finRow ? monthlyTable(finRow, FIN_MONTHS) : ""}
     </div>
 
     <!-- INDIRECT COST -->
@@ -1842,6 +1832,46 @@ function num(v) {
 
 function str(v)  { return v===null||v===undefined ? "" : String(v); }
 function esc(s)  { return str(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+// ─────────────────────────────────────────────────────
+// FINANCIAL HELPERS — multi-EA sum (INV-1)
+// EE grants have 4 financial rows (OP/DUI/DD/Equipment), each with its own EA.
+// financial.find() returns only the first; we must sum ALL matching rows.
+// Join key is Document Name === full grant number (NOT Grant Number field,
+// which stores the short EA code like "GR1910").
+// ─────────────────────────────────────────────────────
+const FIN_MONTHS = ["October","November","December","January","February","March","April","May","June","July","August","September"];
+
+function getFinancialRows(gn) {
+  const g = str(gn).trim();
+  return financial.filter(r => {
+    const dn  = str(r["Document Name"]).trim();
+    const rgn = str(r["Grant Number"]).trim();
+    // exact match on either field, OR Document Name starts with grant number + '-'
+    // (portal Financial Report appends a sequence suffix like -1 to some Document Names)
+    return dn === g || rgn === g || dn.startsWith(g + '-');
+  });
+}
+
+function getFinancialSummary(gn) {
+  const rows = getFinancialRows(gn);
+  if (!rows.length) return { rows: [], synth: null, actTotal: 0, actMatch: 0 };
+  let actTotal = 0, actMatch = 0;
+  const synth = { ...rows[0] };
+  FIN_MONTHS.forEach(m => {
+    let mv = 0, mm = 0;
+    rows.forEach(r => {
+      mv += num(r["Monthly " + m] || r["Monthly" + m] || 0);
+      mm += num(r["Monthly " + m + " Match"] || r["Monthly" + m + "Match"] || 0);
+    });
+    synth["Monthly " + m] = mv;
+    synth["Monthly " + m + " Match"] = mm;
+    actTotal += mv;
+    actMatch += mm;
+  });
+  return { rows, synth, actTotal, actMatch };
+}
+
 // ─────────────────────────────────────────────────────
 // GRANTEE INTELLIGENCE
 // ─────────────────────────────────────────────────────
@@ -1883,11 +1913,8 @@ function renderGI(orgName, orgGrants, fyList, fyFilter) {
     // Skip current FY — cannot penalize for incomplete spending year
     if (fy >= currentFY) return;
     const apv = num(r["Apv Program Total"]||r["Apv Total"]);
-    const finRow = financial.find(f => str(f["Grant Number"])===gn || str(f["Document Name"])===gn);
-    if (apv > 0 && finRow) {
-      const MONTHS = ["October","November","December","January","February","March","April","May","June","July","August","September"];
-      let actual = 0;
-      MONTHS.forEach(m => { actual += num(finRow["Monthly "+m]||0); });
+    const { actTotal: actual } = getFinancialSummary(gn);
+    if (apv > 0 && actual > 0) {
       finScores.push(Math.min(actual/apv, 1));
     }
   });
@@ -1933,11 +1960,8 @@ function renderGI(orgName, orgGrants, fyList, fyFilter) {
       const utils = [];
       fyGrants.forEach(r => {
         const apv = num(r["Apv Program Total"]||r["Apv Total"]);
-        const finRow = financial.find(f => str(f["Grant Number"])===str(r["Grant Number"])||str(f["Document Name"])===str(r["Grant Number"]));
-        if (apv > 0 && finRow) {
-          const MONTHS = ["October","November","December","January","February","March","April","May","June","July","August","September"];
-          let actual = 0;
-          MONTHS.forEach(m => { actual += num(finRow["Monthly "+m]||0); });
+        const { actTotal: actual } = getFinancialSummary(str(r["Grant Number"]));
+        if (apv > 0 && actual > 0) {
           utils.push(actual/apv);
         }
       });
@@ -2136,14 +2160,9 @@ function renderGI(orgName, orgGrants, fyList, fyFilter) {
             const fy  = parseInt(r["Sub Code"]||r["Year"]||0);
             const sig = calcSignal(gn, fy);
             const apv = num(r["Apv Program Total"]||r["Apv Total"]);
-            const finRow = financial.find(f => str(f["Grant Number"])===gn||str(f["Document Name"])===gn);
+            const { actTotal: actual } = getFinancialSummary(gn);
             let pctUsed = null;
-            if (apv > 0 && finRow) {
-              const MONTHS = ["October","November","December","January","February","March","April","May","June","July","August","September"];
-              let actual = 0;
-              MONTHS.forEach(m => { actual += num(finRow["Monthly "+m]||0); });
-              pctUsed = actual/apv;
-            }
+            if (apv > 0 && actual > 0) { pctUsed = actual/apv; }
             return `<tr onclick="showDetailFromOrg('${esc(gn)}')" style="cursor:pointer">
               <td class="left"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:500">${esc(gn)}</span></td>
               <td><span class="badge badge-${esc(str(r["Grant Type"]))}">${esc(str(r["Grant Type"])||"—")}</span></td>
