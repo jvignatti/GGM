@@ -122,12 +122,13 @@ pipeline must be re-run from scratch. The current `grants_data.json` (and the
 
 ## Next Unit to Build
 
-**SIG-1** — Invoice "In Process" calendar fix (small)
-**GI-1** — QTR5 Grant Completion alignment (small)
+**SIG-1** — Invoice "In Process" calendar fix (small, ~15 min)
+**GI-1** — QTR5 Grant Completion alignment (small, ~15 min)
+**Spec 01** — Grant Report Generator button (spec written, ready to implement)
 **Canonical schema** — vendor-proof field normalization at merge time
 
-Then: **Unit 01 — Extension scaffold** (manifest, background, db.js, shared utils)
-Spec file to write: `context/specs/01-extension-scaffold.md`
+Spec 01 is fully written: `context/specs/01-grant-report-generator.md`
+Answer the two open questions in the spec before starting implementation.
 
 ---
 
