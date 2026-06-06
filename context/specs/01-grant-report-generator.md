@@ -148,13 +148,14 @@ and `build_educ_report.py`.
 
 ---
 
-## Open Questions (resolve before implementing)
+## Resolved Decisions
 
-- [ ] Should the report also be available as PDF (reuse html2pdf.js)?
-      Or Word only for now? **Suggest: Word only for v1, PDF is already
-      covered by the per-grant export button.**
-- [ ] Should the report include the SHSO Score from localStorage?
-      Yes — include it if available, redistribute weight if not entered
-      (same logic as Grantee Intelligence).
-- [ ] Filename convention: `SHSO_[Types]_FY[Years]_Report_[Date].docx`
-      e.g. `SHSO_EDUC_FY2025_FY2026_Report_2026-06-06.docx`
+- **Format:** Word (.docx) only for v1. PDF already covered by per-grant export.
+- **SHSO Score:** Include from localStorage. If not entered for an org, redistribute
+  its 15% weight proportionally across the other 5 dimensions (same logic as
+  Grantee Intelligence view).
+- **Filename:** `SHSO_[PROGRAM/PROGRAMS]_FY[YEARS]_REPORT_[DATE].docx`
+  - Single type: `SHSO_EDUC_FY2025_FY2026_REPORT_2026-06-06.docx`
+  - Multiple types: `SHSO_EDUC_EE_FY2026_REPORT_2026-06-06.docx`
+  - All types: `SHSO_ALL_FY2026_REPORT_2026-06-06.docx`
+  - Date format: `YYYY-MM-DD`
