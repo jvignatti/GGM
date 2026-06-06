@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js"></script>
 <style>
 /* ── DESIGN SYSTEM — Government/Public Service─────────────
    Colors: Government palette #0F172A + #0369A1 + #F8FAFC
@@ -668,6 +669,22 @@ td { padding: 8px 14px; vertical-align: middle; }
 
 /* ─── UTILITY ───────────────────────────── */
 .divider-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* ─── REPORT PANEL ──────────────────────── */
+.rp-chip {
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-family: 'Lexend', sans-serif;
+  font-size: 12px; font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.rp-chip.rp-on { background: var(--accent); border-color: var(--accent); color: white; }
+.rp-chip:hover:not(.rp-on) { border-color: var(--accent); color: var(--accent); }
 </style>
 </head>
 <body>
@@ -780,8 +797,32 @@ td { padding: 8px 14px; vertical-align: middle; }
       </div>
       <div class="toolbar-right">
         <button class="btn btn-ghost" id="btn-reset">Reset filters</button>
+        <button class="btn btn-ghost" id="btn-report" onclick="toggleReportPanel()" title="Generate Word performance report">📊 Report</button>
       </div>
     </div>
+
+    <!-- REPORT PANEL -->
+    <div id="rp" style="display:none;padding:14px 28px 16px;background:var(--surface2);border-bottom:2px solid var(--border)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <span style="font-family:'Lexend',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted)">📊 Generate Performance Report</span>
+        <button onclick="toggleReportPanel()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:15px;padding:0 4px;line-height:1">✕</button>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:28px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:7px">Grant Type</div>
+          <div id="rp-types" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:7px">Fiscal Year</div>
+          <div id="rp-years" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        </div>
+        <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:8px;padding-top:2px">
+          <span id="rp-est" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted)">—</span>
+          <button id="rp-go" class="btn btn-primary" onclick="rpDownload()" disabled style="min-width:160px">📥 Download Report</button>
+        </div>
+      </div>
+    </div>
+
     <div class="results-bar">
       <span id="res-info"></span>
       <div style="display:flex;align-items:center;gap:8px;">
@@ -1246,7 +1287,7 @@ function showDetail(gn, sourceList) {
   const { synth: finRow, actTotal, actMatch } = getFinancialSummary(gn);
   const icRow     = indirectData.find(r => str(r["Grant Number"]) === gn);
   const qtrStatus = calcQTRStatus(gQTR, fy);
-  const invStatus = calcINVStatus(gInv, fy);
+  const invStatus = calcINVStatus(gInv.filter(r => str(r["Invoice Status"]) !== "Invoice In Process"), fy);
 
   // Budget figures
   const apvTotal  = num(grant["Apv Total"] || grant["Apv Program Total"]);
@@ -1994,7 +2035,7 @@ function renderGI(orgName, orgGrants, fyList, fyFilter) {
       return p.length >= 3 && p[2] === m && str(i["Invoice Status"]) !== "Invoice In Process";
     })).length;
     // Count QTR reports (QTR1-QTR5)
-    const QTRS = ["QTR1","QTR2","QTR3","QTR4","QTR5"];
+    const QTRS = ["QTR1","QTR2","QTR3","QTR4"];
     const qtrCount = QTRS.filter(q => gQtr.some(r => {
       const p = str(r["QTR Number"]).split("-");
       return p.length >= 2 && p[1] === q;
@@ -2463,6 +2504,335 @@ function supervisorPanel(grantNumber, grantType) {
         </table>
       </div>
     </div>`;
+}
+
+// ─────────────────────────────────────────────────────
+// REPORT GENERATOR — Spec 01
+// Generates a Word (.docx) report for selected grant
+// types and fiscal years from the loaded dashboard data.
+// ─────────────────────────────────────────────────────
+
+let _rpOpen = false, _rpTypes = [], _rpYears = [];
+const RP_MONTHS = ['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep'];
+
+function toggleReportPanel() {
+  _rpOpen = !_rpOpen;
+  const panel = document.getElementById('rp');
+  if (!panel) return;
+  panel.style.display = _rpOpen ? 'block' : 'none';
+  if (_rpOpen && !panel.dataset.init) { rpInit(); panel.dataset.init = '1'; }
+}
+
+function rpInit() {
+  const activeGrants = grants.filter(r => !r['legacy']);
+  const types = [...new Set(activeGrants.map(r => str(r['Grant Type'])).filter(Boolean))].sort();
+  const years = [...new Set(activeGrants.map(r => str(r['Sub Code']||r['Year'])).filter(Boolean))].sort((a,b) => b-a);
+  _rpTypes = [...types];
+  _rpYears = years.length ? [years[0]] : [];
+  document.getElementById('rp-types').innerHTML = types.map(t =>
+    `<button class="rp-chip rp-on" data-v="${esc(t)}" onclick="rpChip(this,'t')">${esc(t)}</button>`
+  ).join('');
+  document.getElementById('rp-years').innerHTML = years.map((y,i) =>
+    `<button class="rp-chip ${i===0?'rp-on':''}" data-v="${esc(y)}" onclick="rpChip(this,'y')">FY${esc(y)}</button>`
+  ).join('');
+  rpEstimate();
+}
+
+function rpChip(btn, kind) {
+  const v = btn.dataset.v, arr = kind==='t' ? _rpTypes : _rpYears;
+  const i = arr.indexOf(v);
+  if (i>=0) arr.splice(i,1); else arr.push(v);
+  btn.classList.toggle('rp-on', arr.includes(v));
+  rpEstimate();
+}
+
+function rpEstimate() {
+  const el = document.getElementById('rp-est'), gb = document.getElementById('rp-go');
+  if (!el) return;
+  const sel = grants.filter(r => !r['legacy'] && _rpTypes.includes(str(r['Grant Type'])) && _rpYears.includes(str(r['Sub Code']||r['Year'])));
+  const orgs = new Set(sel.map(r => str(r['Organization']))).size;
+  el.textContent = `${orgs} org${orgs!==1?'s':''} · ${sel.length} grant${sel.length!==1?'s':''}`;
+  if (gb) gb.disabled = _rpTypes.length===0 || _rpYears.length===0;
+}
+
+// ── Scoring ──────────────────────────────────────────
+
+function rpFinScore(utilPace, hasFin, isCurrent) {
+  if (!hasFin || utilPace == null) return { s:5.0, n:'No financial data' };
+  const p = utilPace * 100;
+  if (!isCurrent) {
+    if (p>100) return {s:3.0, n:'Over-budget'};
+    if (p>=90)  return {s:10.0,n:'Excellent — fully utilized'};
+    if (p>=80)  return {s:9.0, n:'Strong — 80–89%'};
+    if (p>=70)  return {s:7.5, n:'Good — 70–79%'};
+    if (p>=60)  return {s:6.0, n:'Moderate — 60–69%'};
+    if (p>=50)  return {s:5.0, n:'Low — 50–59%'};
+    if (p>=35)  return {s:3.5, n:'Very low — 35–49%'};
+    return {s:2.0, n:'Critical — under 35%'};
+  } else {
+    if (p>120)  return {s:3.5, n:'Well over pace — budget risk'};
+    if (p>110)  return {s:5.0, n:'Ahead of pace'};
+    if (p>=85)  return {s:10.0,n:'On pace'};
+    if (p>=70)  return {s:8.5, n:'Slightly under pace'};
+    if (p>=55)  return {s:7.0, n:'Moderately under pace'};
+    if (p>=35)  return {s:5.5, n:'Significantly under pace'};
+    return {s:3.0, n:'Very low — stalled?'};
+  }
+}
+
+function rpOrgMetrics(orgGrants, fyStr) {
+  const fyNum = parseInt(fyStr);
+  const curFY = today.getMonth()>=9 ? today.getFullYear()+1 : today.getFullYear();
+  const isCurrent = fyNum >= curFY;
+  const nDueM = countDueMonths(fyNum);
+  const nDueQ = countDueQTRs(fyNum);
+  const dueMo = RP_MONTHS.slice(0, nDueM);
+  const dueQs = ['QTR1','QTR2','QTR3','QTR4'].slice(0, nDueQ);
+
+  let invSub=new Set(), qtrSub=new Set(), apvTotal=0, expTotal=0, hasFin=false;
+  const grantList = [];
+
+  orgGrants.forEach(g => {
+    const gn = str(g['Grant Number']);
+    const gInv = invoices.filter(r => r['Parent Grant Number']===gn && !isSupplemental(r['Invoice Number']) && str(r['Invoice Status'])!=='Invoice In Process');
+    const gQTR = qtrs.filter(r => r['Parent Grant Number']===gn);
+    RP_MONTHS.forEach(m => { if(gInv.some(r=>{const p=str(r['Invoice Number']).split('-');return p.length>=3&&p[2]===m;})) invSub.add(m); });
+    ['QTR1','QTR2','QTR3','QTR4'].forEach(q => { if(gQTR.some(r=>{const p=str(r['QTR Number']).split('-');return p.length>=2&&p[1]===q;})) qtrSub.add(q); });
+    apvTotal += num(g['Apv Total']||g['Apv Program Total']);
+    const {actTotal, synth} = getFinancialSummary(gn);
+    if (synth) hasFin = true;
+    expTotal += actTotal;
+    grantList.push({gn, title:str(g['Project Title']), apv:num(g['Apv Total']||g['Apv Program Total'])});
+  });
+
+  const invDone = [...invSub].filter(m => dueMo.includes(m));
+  const qtrDone = [...qtrSub].filter(q => dueQs.includes(q));
+  const invMiss = dueMo.filter(m => !invSub.has(m));
+  const qtrMiss = dueQs.filter(q => !qtrSub.has(q));
+  const invRate = nDueM>0 ? invDone.length/nDueM : 1;
+  const qtrRate = nDueQ>0 ? qtrDone.length/nDueQ : 1;
+  const expPace = isCurrent ? (nDueM/12)*apvTotal : apvTotal;
+  const utilPace = expPace>0 ? expTotal/expPace : null;
+  const {s:finS, n:finNote} = rpFinScore(utilPace, hasFin, isCurrent);
+  const fyScore = Math.round(Math.max(1, Math.min(10, (invRate*10*0.40)+(qtrRate*10*0.30)+(finS*0.30)))*10)/10;
+
+  return {grantList, invRate, qtrRate, invDone, invMiss, qtrDone, qtrMiss, apv:apvTotal, exp:expTotal, utilPace, hasFin, fyScore, finNote, isCurrent, nDueM, nDueQ};
+}
+
+function rpBuildResults() {
+  const orgMap = {};
+  grants.filter(r => !r['legacy'] && _rpTypes.includes(str(r['Grant Type'])) && _rpYears.includes(str(r['Sub Code']||r['Year'])))
+    .forEach(g => {
+      const org = str(g['Organization']), fy = str(g['Sub Code']||g['Year']);
+      if (!orgMap[org]) orgMap[org] = {};
+      if (!orgMap[org][fy]) orgMap[org][fy] = [];
+      orgMap[org][fy].push(g);
+    });
+
+  const results = {};
+  const curFY = str(today.getMonth()>=9 ? today.getFullYear()+1 : today.getFullYear());
+
+  Object.entries(orgMap).forEach(([org, fyMap]) => {
+    const fyResults = {};
+    const sortedFYs = Object.keys(fyMap).sort((a,b) => b-a);
+    sortedFYs.forEach(fy => { fyResults[fy] = rpOrgMetrics(fyMap[fy], fy); });
+
+    const fyScores = sortedFYs.map(fy => fyResults[fy].fyScore);
+    let genScore;
+    if (fyScores.length===0) genScore = null;
+    else if (fyScores.length===1) genScore = fyScores[0];
+    else genScore = sortedFYs[0]===curFY ? fyScores[0]*0.6+fyScores[1]*0.4 : fyScores.reduce((a,b)=>a+b,0)/fyScores.length;
+
+    // SHSO score adjustment on general
+    const lsKey = 'shso_score_'+org.replace(/\s+/g,'_');
+    const shsoRaw = parseFloat(localStorage.getItem(lsKey)||'0');
+    if (shsoRaw>0 && genScore!=null) genScore = genScore*0.85 + (shsoRaw/10)*10*0.15;
+    genScore = genScore!=null ? Math.round(genScore*10)/10 : null;
+
+    results[org] = {fyResults, genScore, sortedFYs};
+  });
+  return results;
+}
+
+// ── Score helpers ────────────────────────────────────
+
+function rpScoreLabel(s) {
+  if (!s) return 'N/A';
+  if (s>=9.0) return 'Excellent'; if (s>=8.0) return 'Strong';
+  if (s>=7.0) return 'Good';      if (s>=6.0) return 'Satisfactory';
+  if (s>=5.0) return 'Fair';      if (s>=3.5) return 'At Risk';
+  return 'Critical';
+}
+function rpScoreColor(s) {
+  if (!s) return '94A3B8';
+  return s>=8.5 ? '16A34A' : s>=6.5 ? 'D97706' : 'DC2626';
+}
+function rpPct(v) { return v!=null ? (v*100).toFixed(1)+'%' : '—'; }
+function rpUsd(v) { return v>0 ? '$'+Math.round(v).toLocaleString() : '—'; }
+
+// ── docx builder ─────────────────────────────────────
+
+function rpBuildDocx(results) {
+  const D = window.docx;
+  const mm = v => Math.round(v*56.693);
+  const run = (text, o={}) => new D.TextRun({text:str(text), font:'Calibri', size:o.sz||18, bold:!!o.bold, color:o.col||'020617', italics:!!o.italic});
+  const para = (kids, o={}) => new D.Paragraph({
+    children: Array.isArray(kids)?kids:[kids],
+    alignment: o.align||D.AlignmentType.LEFT,
+    spacing: {before:o.b||0, after:o.a||80}
+  });
+  const shd = (fill) => ({type:D.ShadingType.CLEAR, color:'auto', fill});
+  const hdrCell = (text, w) => new D.TableCell({
+    children:[para(run(text,{sz:15,bold:true,col:'FFFFFF'}),{align:D.AlignmentType.CENTER,a:40,b:40})],
+    shading:shd('0F172A'), margins:{top:60,bottom:60,left:80,right:80},
+    ...(w?{width:{size:w,type:D.WidthType.DXA}}:{})
+  });
+  const cell = (text, o={}) => new D.TableCell({
+    children:[para(run(str(text),{sz:o.sz||18,bold:!!o.bold,col:o.col||'020617'}),{align:o.align||D.AlignmentType.LEFT,a:40,b:40})],
+    shading:o.fill?shd(o.fill):undefined, margins:{top:40,bottom:40,left:80,right:80},
+    ...(o.w?{width:{size:o.w,type:D.WidthType.DXA}}:{})
+  });
+
+  const sortedOrgs = Object.entries(results).sort((a,b)=>(b[1].genScore||0)-(a[1].genScore||0));
+  const allFYs = [...new Set(_rpYears)].sort((a,b)=>b-a);
+  const kids = [];
+
+  // ── Cover ──────────────────────────────────────────
+  kids.push(para(run('SHSO Grant Portfolio',{sz:48,bold:true,col:'0F172A'}),{align:D.AlignmentType.CENTER,b:600,a:160}));
+  kids.push(para(run(_rpTypes.join(' · ')+'  —  FY'+allFYs.join(' / FY'),{sz:26,col:'0369A1'}),{align:D.AlignmentType.CENTER,a:80}));
+  kids.push(para(run('Performance & Compliance Analysis',{sz:22,col:'0369A1',italic:true}),{align:D.AlignmentType.CENTER,a:120}));
+  kids.push(para(run('Report Date: '+today.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})+'  ·  Vermont Highway Safety Office',{sz:18,col:'64748B',italic:true}),{align:D.AlignmentType.CENTER,a:400}));
+  kids.push(para(run('Scoring: Invoice Compliance 40% + QTR Compliance 30% + Financial Utilization 30%. Current-FY grants scored against expected spending pace; closed years against full budget. General score weights toward most recent year.',{sz:16,col:'64748B',italic:true}),{a:120}));
+  kids.push(new D.Paragraph({children:[new D.PageBreak()]}));
+
+  // ── Summary table ──────────────────────────────────
+  kids.push(para(run('Portfolio Summary',{sz:28,bold:true,col:'0F172A'}),{a:120}));
+  const summHdrs = [hdrCell('Organization',2200), hdrCell('General',860)];
+  allFYs.forEach(fy => { summHdrs.push(hdrCell('FY'+fy+'\nScore',820),hdrCell('Inv%',680),hdrCell('QTR%',680),hdrCell('Util%',760)); });
+  const summRows = [new D.TableRow({children:summHdrs, tableHeader:true})];
+  sortedOrgs.forEach(([org,res],idx) => {
+    const fill = idx%2===0?'F8FAFC':'FFFFFF';
+    const cells = [
+      cell(org,{bold:true,fill,w:2200}),
+      cell(res.genScore?res.genScore.toFixed(1):'—',{bold:true,col:rpScoreColor(res.genScore),align:D.AlignmentType.CENTER,fill,w:860}),
+    ];
+    allFYs.forEach(fy => {
+      const m = res.fyResults[fy];
+      if (m) {
+        cells.push(cell(m.fyScore.toFixed(1),{bold:true,col:rpScoreColor(m.fyScore),align:D.AlignmentType.CENTER,fill,w:820}));
+        cells.push(cell(rpPct(m.invRate),{col:m.invRate>=0.85?'16A34A':m.invRate>=0.6?'D97706':'DC2626',align:D.AlignmentType.CENTER,fill,w:680}));
+        cells.push(cell(rpPct(m.qtrRate),{col:m.qtrRate>=0.85?'16A34A':m.qtrRate>=0.6?'D97706':'DC2626',align:D.AlignmentType.CENTER,fill,w:680}));
+        cells.push(cell(m.hasFin?rpPct(m.utilPace):'n/a',{col:m.utilPace&&m.utilPace>=0.7?'16A34A':m.utilPace&&m.utilPace>=0.4?'D97706':'DC2626',align:D.AlignmentType.CENTER,fill,w:760}));
+      } else {
+        ['820','680','680','760'].forEach(w => cells.push(cell('—',{align:D.AlignmentType.CENTER,col:'94A3B8',fill,w:parseInt(w)})));
+      }
+    });
+    summRows.push(new D.TableRow({children:cells}));
+  });
+  kids.push(new D.Table({rows:summRows, width:{size:100,type:D.WidthType.PERCENTAGE}}));
+
+  // ── Per-org pages ──────────────────────────────────
+  sortedOrgs.forEach(([org, res]) => {
+    kids.push(new D.Paragraph({children:[new D.PageBreak()]}));
+    kids.push(para(run(org,{sz:32,bold:true,col:'0F172A'}),{a:80}));
+
+    // Score chips line
+    const scoreParts = [];
+    if (res.genScore) scoreParts.push(`General: ${res.genScore.toFixed(1)}/10 (${rpScoreLabel(res.genScore)})`);
+    res.sortedFYs.forEach(fy => { const m=res.fyResults[fy]; if(m) scoreParts.push(`FY${fy}: ${m.fyScore.toFixed(1)}/10`); });
+    kids.push(para(run(scoreParts.join('   ·   '),{sz:20,bold:true,col:'0369A1'}),{a:140}));
+
+    res.sortedFYs.forEach(fy => {
+      const m = res.fyResults[fy];
+      if (!m) return;
+      kids.push(para(run(`FY${fy} — ${m.isCurrent?'In Progress (current to date)':'Closed Year (full 12 months)'}`,{sz:22,bold:true,col:'334155'}),{b:100,a:60}));
+
+      // Grant list
+      kids.push(para(run('Grant(s): '+m.grantList.map(g=>g.gn+' ['+rpUsd(g.apv)+']').join('   '),{sz:16,col:'475569'}),{a:60}));
+
+      // Metrics table
+      const mHdr = [hdrCell('Metric',1440),hdrCell('Invoice',1080),hdrCell('QTR',900),hdrCell('Approved',1080),hdrCell('Expended',1080),hdrCell('Utilization',1080)];
+      const mVal = [
+        cell('Value',{bold:true,fill:'F1F5F9',w:1440}),
+        cell(`${m.invDone.length}/${m.invDone.length+m.invMiss.length} (${rpPct(m.invRate)})`,{col:m.invRate>=0.85?'16A34A':m.invRate>=0.6?'D97706':'DC2626',align:D.AlignmentType.CENTER,w:1080}),
+        cell(`${m.qtrDone.length}/${m.qtrDone.length+m.qtrMiss.length} (${rpPct(m.qtrRate)})`,{col:m.qtrRate>=0.85?'16A34A':m.qtrRate>=0.6?'D97706':'DC2626',align:D.AlignmentType.CENTER,w:900}),
+        cell(rpUsd(m.apv),{align:D.AlignmentType.CENTER,w:1080}),
+        cell(m.hasFin?rpUsd(m.exp):'No data',{col:m.hasFin?'020617':'94A3B8',align:D.AlignmentType.CENTER,w:1080}),
+        cell(m.hasFin?rpPct(m.utilPace):'No data',{col:m.utilPace&&m.utilPace>=0.7?'16A34A':m.utilPace&&m.utilPace>=0.4?'D97706':'DC2626',align:D.AlignmentType.CENTER,w:1080}),
+      ];
+      kids.push(new D.Table({rows:[new D.TableRow({children:mHdr,tableHeader:true}),new D.TableRow({children:mVal})], width:{size:100,type:D.WidthType.PERCENTAGE}}));
+
+      // Flags / rationale
+      const flags = [];
+      if (m.invMiss.length) flags.push('Missing invoices: '+m.invMiss.join(', '));
+      if (m.qtrMiss.length) flags.push('Missing QTRs: '+m.qtrMiss.join(', '));
+      if (!m.hasFin) flags.push('Financial data not available');
+      if (m.utilPace&&m.utilPace>1.1) flags.push('Over pace — budget risk');
+      if (m.utilPace&&m.utilPace<0.2) flags.push('Very low utilization');
+      if (flags.length) kids.push(para(run('⚠  '+flags.join('   |   '),{sz:16,col:'DC2626'}),{b:60,a:60}));
+      else kids.push(para(run('✓  No compliance flags',{sz:16,col:'16A34A',bold:true}),{b:60,a:60}));
+      kids.push(para(run(`Score ${m.fyScore.toFixed(1)}/10 (${rpScoreLabel(m.fyScore)}) — ${m.finNote}`,{sz:15,col:'475569',italic:true}),{a:100}));
+    });
+  });
+
+  // ── Appendix ───────────────────────────────────────
+  kids.push(new D.Paragraph({children:[new D.PageBreak()]}));
+  kids.push(para(run('Appendix — Ranked by General Score',{sz:28,bold:true,col:'0F172A'}),{a:120}));
+  const rankHdrs = [hdrCell('#',480),hdrCell('Organization',2200),hdrCell('General',820),hdrCell('Assessment',1400),hdrCell('Flags',2900)];
+  const rankRows = [new D.TableRow({children:rankHdrs,tableHeader:true})];
+  sortedOrgs.forEach(([org,res],i) => {
+    const fill = i%2===0?'F8FAFC':'FFFFFF';
+    const flags = res.sortedFYs.flatMap(fy => {
+      const m=res.fyResults[fy]; if(!m) return [];
+      const f=[];
+      if(m.invMiss.length) f.push(`FY${fy} inv: ${m.invMiss.join(',')}`);
+      if(m.qtrMiss.length) f.push(`FY${fy} QTR: ${m.qtrMiss.join(',')}`);
+      return f;
+    });
+    rankRows.push(new D.TableRow({children:[
+      cell(String(i+1),{align:D.AlignmentType.CENTER,col:'64748B',fill,w:480}),
+      cell(org,{bold:true,fill,w:2200}),
+      cell(res.genScore?res.genScore.toFixed(1):'—',{bold:true,col:rpScoreColor(res.genScore),align:D.AlignmentType.CENTER,fill,w:820}),
+      cell(rpScoreLabel(res.genScore),{col:rpScoreColor(res.genScore),fill,w:1400}),
+      cell(flags.length?flags.join('  ·  '):'No flags',{sz:16,col:flags.length?'DC2626':'16A34A',fill,w:2900}),
+    ]}));
+  });
+  kids.push(new D.Table({rows:rankRows,width:{size:100,type:D.WidthType.PERCENTAGE}}));
+
+  return new D.Document({
+    sections:[{
+      properties:{ page:{ margin:{ top:mm(19),bottom:mm(19),left:mm(22),right:mm(22) } } },
+      children: kids
+    }]
+  });
+}
+
+function rpFilename() {
+  const typePart = _rpTypes.length === [...new Set(grants.filter(r=>!r.legacy).map(r=>str(r['Grant Type'])).filter(Boolean))].length ? 'ALL' : _rpTypes.join('_');
+  const yearPart = [..._rpYears].sort((a,b)=>a-b).map(y=>'FY'+y).join('_');
+  const dt = today.toISOString().slice(0,10);
+  return `SHSO_${typePart}_${yearPart}_REPORT_${dt}.docx`;
+}
+
+async function rpDownload() {
+  const btn = document.getElementById('rp-go');
+  if (btn) { btn.disabled=true; btn.textContent='⏳ Generating…'; }
+  try {
+    if (!window.docx) throw new Error('docx library not loaded — check internet connection');
+    const results = rpBuildResults();
+    if (!Object.keys(results).length) throw new Error('No grants match the selected filters');
+    const doc = rpBuildDocx(results);
+    const blob = await window.docx.Packer.toBlob(doc);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href=url; a.download=rpFilename(); a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    alert('Report error: '+e.message);
+    console.error('Report error:', e);
+  } finally {
+    if (btn) { btn.disabled=false; btn.textContent='📥 Download Report'; }
+  }
 }
 
 </script>

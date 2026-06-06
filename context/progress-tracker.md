@@ -60,6 +60,8 @@ pipeline must be re-run from scratch. The current `grants_data.json` (and the
 | **Budget field** | 6b5b624 | `Apv Total` (federal award only) takes priority over `Apv Program Total` (federal+match). Fixes inflated approved budget display. |
 | IC panel false-positive | 5e789b1 | Panel now requires `charged > 0 AND totalIC > 0`. Rate-only grants (2 EE grants: St.Johnsb, Woodstock) no longer show empty IC panel. |
 | IC category checkmarks | 2d7a433 | ✅ only shows when category is IN the IC base (has IC amount > 0). Column renamed "Has Cost" → "In IC Base". |
+| **SIG-1** | — | `calcINVStatus` now pre-filters out "Invoice In Process" invoices — calendar flags now match signal. |
+| **GI-1** | — | Grant Completion now requires QTR1–4 only (not QTR5) — aligns with compliance signal counting. |
 
 ### Foundation Docs
 - [x] CLAUDE.md
@@ -84,8 +86,6 @@ pipeline must be re-run from scratch. The current `grants_data.json` (and the
 
 | ID | Severity | Description | File/Location |
 |---|---|---|---|
-| SIG-1 | Medium | "Invoice In Process" shows ✅ in calendar but excluded from signal — contradiction visible to user | `index.html` ~line 1507 |
-| GI-1 | Medium | QTR5 required for Grant Completion in Grantee Score but compliance signals only count QTR1–4 — understates completed-grant scores | `index.html` ~line 1973 |
 | ORG-1 | Low | SHSO score localStorage key uses raw org name string — special chars (`&`, `/`, spaces) create inconsistent keys | `index.html` ~line 1983 |
 
 ---
@@ -138,8 +138,8 @@ Answer the two open questions in the spec before starting implementation.
 |---|---|---|
 | 00-FIN1 | Fix financial sum in index.html | ✅ Complete |
 | 00-FIN2 | Fix amendment financial join (startsWith) | ✅ Complete |
-| SIG-1 | Fix Invoice In Process calendar vs signal | 🔲 Next |
-| GI-1 | Fix QTR5 Grant Completion alignment | 🔲 Next |
+| SIG-1 | Fix Invoice In Process calendar vs signal | ✅ Complete |
+| GI-1 | Fix QTR5 Grant Completion alignment | ✅ Complete |
 | 01 | Extension scaffold: manifest, background, db.js, shared/ | 🔲 |
 | 02 | IndexedDB schema + migration | 🔲 |
 | 03 | Scraper: landing page (invoices + QTRs) | 🔲 |
