@@ -122,13 +122,8 @@ pipeline must be re-run from scratch. The current `grants_data.json` (and the
 
 ## Next Unit to Build
 
-**SIG-1** — Invoice "In Process" calendar fix (small, ~15 min)
-**GI-1** — QTR5 Grant Completion alignment (small, ~15 min)
-**Spec 01** — Grant Report Generator button (spec written, ready to implement)
 **Canonical schema** — vendor-proof field normalization at merge time
-
-Spec 01 is fully written: `context/specs/01-grant-report-generator.md`
-Answer the two open questions in the spec before starting implementation.
+**Spec 01 verification** — feature is implemented; run through the spec's verify checklist before marking complete
 
 ---
 
@@ -140,6 +135,7 @@ Answer the two open questions in the spec before starting implementation.
 | 00-FIN2 | Fix amendment financial join (startsWith) | ✅ Complete |
 | SIG-1 | Fix Invoice In Process calendar vs signal | ✅ Complete |
 | GI-1 | Fix QTR5 Grant Completion alignment | ✅ Complete |
+| Spec 01 | Grant Report Generator (📊 button → .docx download) | ⚠️ Needs verify |
 | 01 | Extension scaffold: manifest, background, db.js, shared/ | 🔲 |
 | 02 | IndexedDB schema + migration | 🔲 |
 | 03 | Scraper: landing page (invoices + QTRs) | 🔲 |
