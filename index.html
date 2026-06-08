@@ -884,9 +884,10 @@ let filtered = [], curPage = 1;
 let sortCol = "__signal", sortDir = "asc", sortNum = true;
 let navList = [], navIdx = -1;
 let orgNavList = [];
-let giSelectedFYs = [];
-let giSortCol     = null;
-let giSortDir     = "asc";
+let giSelectedFYs      = [];
+let giSelectedPrograms = [];
+let giSortCol          = null;
+let giSortDir          = "asc";
 let showLegacy = true;  // global legacy toggle
 const PER = 100;
 const today = new Date();
@@ -1933,18 +1934,22 @@ function showGI(orgName) {
   document.getElementById("view-list").style.display   = "none";
   document.getElementById("view-detail").style.display = "block";
 
-  giSelectedFYs = [];
-  giSortCol     = null;
-  giSortDir     = "asc";
+  giSelectedFYs      = [];
+  giSelectedPrograms = [];
+  giSortCol          = null;
+  giSortDir          = "asc";
   renderGI(orgName, orgGrants, fyList, "");
 }
 
 function renderGI(orgName, orgGrants, fyList, fyFilter) {
   // Normalize fyList — may arrive as comma-separated string from inline onclick buttons
   if (typeof fyList === "string") fyList = fyList.split(",").filter(Boolean);
-  const filtered = giSelectedFYs.length
-    ? orgGrants.filter(r => giSelectedFYs.includes(str(r["Sub Code"]||r["Year"])))
-    : orgGrants;
+  const filtered = (() => {
+    let f = orgGrants;
+    if (giSelectedFYs.length)      f = f.filter(r => giSelectedFYs.includes(str(r["Sub Code"]||r["Year"])));
+    if (giSelectedPrograms.length) f = f.filter(r => giSelectedPrograms.includes(str(r["Grant Type"])));
+    return f;
+  })();
 
   // Set org nav list for Next/Back navigation
   orgNavList = filtered.map(r => r["Grant Number"]);
@@ -2088,6 +2093,9 @@ function renderGI(orgName, orgGrants, fyList, fyFilter) {
     </div>`;
   };
 
+  // Program types present on this org (for the Program filter row)
+  const programList = [...new Set(orgGrants.map(r => str(r["Grant Type"])).filter(Boolean))].sort();
+
   const dv = document.getElementById("view-detail");
   dv.innerHTML = `
   <div class="detail">
@@ -2113,17 +2121,31 @@ function renderGI(orgName, orgGrants, fyList, fyFilter) {
       </div>
     </div>
 
-    <!-- FY FILTER -->
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-      <span style="font-family:'Lexend',sans-serif;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em">View:</span>
-      <button onclick="giSelectedFYs=[];renderGI('${esc(orgName).replace(/'/g,"&#39;")}',orgGrantsCache,'${fyList.join(",")}','')"
-        style="padding:5px 12px;border-radius:20px;border:1px solid ${giSelectedFYs.length===0?'var(--accent)':'var(--border)'};background:${giSelectedFYs.length===0?'var(--accent)':'white'};color:${giSelectedFYs.length===0?'white':'var(--text-secondary)'};font-size:12px;cursor:pointer;font-family:'Lexend',sans-serif;font-weight:600">
-        All Years
-      </button>
-      ${fyList.map(fy=>`<button onclick="(function(y){const i=giSelectedFYs.indexOf(y);if(i===-1)giSelectedFYs.push(y);else giSelectedFYs.splice(i,1);renderGI('${esc(orgName).replace(/'/g,"&#39;")}',orgGrantsCache,'${fyList.join(",")}','');}('${fy}'))"
-        style="padding:5px 12px;border-radius:20px;border:1px solid ${giSelectedFYs.includes(fy)?'var(--accent)':'var(--border)'};background:${giSelectedFYs.includes(fy)?'var(--accent)':'white'};color:${giSelectedFYs.includes(fy)?'white':'var(--text-secondary)'};font-size:12px;cursor:pointer;font-family:'Lexend',sans-serif;font-weight:600">
-        FY${fy}
-      </button>`).join("")}
+    <!-- FY + PROGRAM FILTERS -->
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-family:'Lexend',sans-serif;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;min-width:62px">View:</span>
+        <button onclick="giSelectedFYs=[];renderGI('${esc(orgName).replace(/'/g,"&#39;")}',orgGrantsCache,'${fyList.join(",")}','')"
+          style="padding:5px 12px;border-radius:20px;border:1px solid ${giSelectedFYs.length===0?'var(--accent)':'var(--border)'};background:${giSelectedFYs.length===0?'var(--accent)':'white'};color:${giSelectedFYs.length===0?'white':'var(--text-secondary)'};font-size:12px;cursor:pointer;font-family:'Lexend',sans-serif;font-weight:600">
+          All Years
+        </button>
+        ${fyList.map(fy=>`<button onclick="(function(y){const i=giSelectedFYs.indexOf(y);if(i===-1)giSelectedFYs.push(y);else giSelectedFYs.splice(i,1);renderGI('${esc(orgName).replace(/'/g,"&#39;")}',orgGrantsCache,'${fyList.join(",")}','');}('${fy}'))"
+          style="padding:5px 12px;border-radius:20px;border:1px solid ${giSelectedFYs.includes(fy)?'var(--accent)':'var(--border)'};background:${giSelectedFYs.includes(fy)?'var(--accent)':'white'};color:${giSelectedFYs.includes(fy)?'white':'var(--text-secondary)'};font-size:12px;cursor:pointer;font-family:'Lexend',sans-serif;font-weight:600">
+          FY${fy}
+        </button>`).join("")}
+      </div>
+      ${programList.length > 1 ? `
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-family:'Lexend',sans-serif;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;min-width:62px">Program:</span>
+        <button onclick="giSelectedPrograms=[];renderGI('${esc(orgName).replace(/'/g,"&#39;")}',orgGrantsCache,'${fyList.join(",")}','')"
+          style="padding:5px 12px;border-radius:20px;border:1px solid ${giSelectedPrograms.length===0?'var(--accent)':'var(--border)'};background:${giSelectedPrograms.length===0?'var(--accent)':'white'};color:${giSelectedPrograms.length===0?'white':'var(--text-secondary)'};font-size:12px;cursor:pointer;font-family:'Lexend',sans-serif;font-weight:600">
+          All Programs
+        </button>
+        ${programList.map(pt=>`<button onclick="(function(p){const i=giSelectedPrograms.indexOf(p);if(i===-1)giSelectedPrograms.push(p);else giSelectedPrograms.splice(i,1);renderGI('${esc(orgName).replace(/'/g,"&#39;")}',orgGrantsCache,'${fyList.join(",")}','');}('${pt}'))"
+          style="padding:5px 12px;border-radius:20px;border:1px solid ${giSelectedPrograms.includes(pt)?'var(--accent)':'var(--border)'};background:${giSelectedPrograms.includes(pt)?'var(--accent)':'white'};color:${giSelectedPrograms.includes(pt)?'white':'var(--text-secondary)'};font-size:12px;cursor:pointer;font-family:'Lexend',sans-serif;font-weight:600">
+          ${pt}
+        </button>`).join("")}
+      </div>` : ""}
     </div>
 
     <!-- SCORE BREAKDOWN + SHSO INPUT -->
@@ -2216,9 +2238,12 @@ function renderGI(orgName, orgGrants, fyList, fyFilter) {
 
 function renderGITable() {
   const rows = (() => {
-    const base = giSelectedFYs.length
-      ? window.orgGrantsCache.filter(r => giSelectedFYs.includes(str(r["Sub Code"]||r["Year"])))
-      : window.orgGrantsCache;
+    const base = (() => {
+      let f = window.orgGrantsCache;
+      if (giSelectedFYs.length)      f = f.filter(r => giSelectedFYs.includes(str(r["Sub Code"]||r["Year"])));
+      if (giSelectedPrograms.length) f = f.filter(r => giSelectedPrograms.includes(str(r["Grant Type"])));
+      return f;
+    })();
     if (!giSortCol) return [...base];
     return [...base].sort((a, b) => {
       if (giSortCol === "type") {
